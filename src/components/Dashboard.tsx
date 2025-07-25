@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Clock, DollarSign, Navigation, Power, PowerOff } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Navigation, Power, PowerOff, FileText, User, TrendingUp, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -46,9 +46,12 @@ const mockOrders: Order[] = [
 
 interface DashboardProps {
   onAcceptOrder: (order: Order) => void;
+  onNavigateToDocuments: () => void;
+  onNavigateToProfile: () => void;
+  onNavigateToEarnings: () => void;
 }
 
-const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
+const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, onNavigateToEarnings }: DashboardProps) => {
   const [isOnline, setIsOnline] = useState(false);
   const [todayEarnings] = useState("$0.00");
   const { toast } = useToast();
@@ -88,21 +91,26 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
             </div>
           </div>
           
-          <Button
-            onClick={toggleOnlineStatus}
-            variant={isOnline ? "default" : "secondary"}
-            size="sm"
-            className={`flex items-center space-x-2 ${
-              isOnline 
-                ? "bg-success hover:bg-success/90 text-success-foreground" 
-                : "bg-inactive hover:bg-inactive/80 text-foreground"
-            }`}
-          >
-            {isOnline ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
-            <span className="font-medium">
-              {isOnline ? "Conectado" : "Desconectado"}
-            </span>
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="sm" onClick={onNavigateToProfile}>
+              <Menu className="w-4 h-4" />
+            </Button>
+            <Button
+              onClick={toggleOnlineStatus}
+              variant={isOnline ? "default" : "secondary"}
+              size="sm"
+              className={`flex items-center space-x-2 ${
+                isOnline 
+                  ? "bg-success hover:bg-success/90 text-success-foreground" 
+                  : "bg-inactive hover:bg-inactive/80 text-foreground"
+              }`}
+            >
+              {isOnline ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+              <span className="font-medium">
+                {isOnline ? "Conectado" : "Desconectado"}
+              </span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -220,6 +228,34 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
             ))}
           </div>
         )}
+
+        {/* Quick Access Menu */}
+        <div className="grid grid-cols-3 gap-3 mt-4">
+          <Button
+            variant="outline"
+            onClick={onNavigateToDocuments}
+            className="flex flex-col items-center p-4 h-auto"
+          >
+            <FileText className="w-6 h-6 mb-2" />
+            <span className="text-xs">Documentos</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onNavigateToProfile}
+            className="flex flex-col items-center p-4 h-auto"
+          >
+            <User className="w-6 h-6 mb-2" />
+            <span className="text-xs">Mi Perfil</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onNavigateToEarnings}
+            className="flex flex-col items-center p-4 h-auto"
+          >
+            <TrendingUp className="w-6 h-6 mb-2" />
+            <span className="text-xs">Ganancias</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
