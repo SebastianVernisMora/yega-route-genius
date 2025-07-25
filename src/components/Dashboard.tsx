@@ -1,0 +1,228 @@
+import { useState } from 'react';
+import { MapPin, Clock, DollarSign, Navigation, Power, PowerOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+
+interface Order {
+  id: string;
+  earnings: string;
+  storeName: string;
+  storeDistance: string;
+  deliveryZone: string;
+  totalDistance: string;
+  estimatedTime: string;
+}
+
+const mockOrders: Order[] = [
+  {
+    id: "YEGA-1025",
+    earnings: "$45.00",
+    storeName: "McDonald's Zona Rosa",
+    storeDistance: "1.2 km",
+    deliveryZone: "Colonia Roma Norte",
+    totalDistance: "4.5 km",
+    estimatedTime: "25 min"
+  },
+  {
+    id: "YEGA-1026",
+    earnings: "$38.50",
+    storeName: "Starbucks Polanco",
+    storeDistance: "0.8 km",
+    deliveryZone: "Santa Fe",
+    totalDistance: "6.2 km",
+    estimatedTime: "30 min"
+  },
+  {
+    id: "YEGA-1027",
+    earnings: "$52.00",
+    storeName: "KFC Insurgentes",
+    storeDistance: "2.1 km",
+    deliveryZone: "Colonia Condesa",
+    totalDistance: "3.8 km",
+    estimatedTime: "22 min"
+  }
+];
+
+interface DashboardProps {
+  onAcceptOrder: (order: Order) => void;
+}
+
+const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
+  const [isOnline, setIsOnline] = useState(false);
+  const [todayEarnings] = useState("$0.00");
+  const { toast } = useToast();
+
+  const toggleOnlineStatus = () => {
+    setIsOnline(!isOnline);
+    toast({
+      title: isOnline ? "Te has desconectado" : "¡Estás conectado!",
+      description: isOnline ? "No recibirás nuevos pedidos" : "Ahora puedes recibir pedidos",
+    });
+  };
+
+  const handleAcceptOrder = (order: Order) => {
+    if (!isOnline) {
+      toast({
+        title: "Conecta tu estado",
+        description: "Debes estar conectado para aceptar pedidos",
+        variant: "destructive"
+      });
+      return;
+    }
+    onAcceptOrder(order);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-surface border-b border-border p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary to-success rounded-lg flex items-center justify-center">
+              <span className="text-lg font-bold text-primary-foreground">Y</span>
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">YEGA Repartidor</h1>
+              <p className="text-sm text-muted-foreground">Hoy has ganado: {todayEarnings}</p>
+            </div>
+          </div>
+          
+          <Button
+            onClick={toggleOnlineStatus}
+            variant={isOnline ? "default" : "secondary"}
+            size="sm"
+            className={`flex items-center space-x-2 ${
+              isOnline 
+                ? "bg-success hover:bg-success/90 text-success-foreground" 
+                : "bg-inactive hover:bg-inactive/80 text-foreground"
+            }`}
+          >
+            {isOnline ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+            <span className="font-medium">
+              {isOnline ? "Conectado" : "Desconectado"}
+            </span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Map Placeholder */}
+      <div className="h-48 bg-surface-elevated relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-surface to-surface-elevated">
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <MapPin className="w-12 h-12 text-primary mx-auto mb-2" />
+              <p className="text-muted-foreground text-sm">Mapa de pedidos disponibles</p>
+              {!isOnline && (
+                <p className="text-inactive text-xs mt-1">Conéctate para ver pedidos</p>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Mock markers */}
+        {isOnline && (
+          <>
+            <div className="absolute top-12 left-8 w-4 h-4 bg-warning rounded-full animate-pulse border-2 border-background" />
+            <div className="absolute top-20 right-12 w-4 h-4 bg-warning rounded-full animate-pulse border-2 border-background" />
+            <div className="absolute bottom-16 left-16 w-4 h-4 bg-warning rounded-full animate-pulse border-2 border-background" />
+          </>
+        )}
+      </div>
+
+      {/* Orders Section */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">
+            Pedidos Disponibles
+          </h2>
+          <span className="text-sm text-muted-foreground">
+            {isOnline ? `${mockOrders.length} disponibles` : "Desconectado"}
+          </span>
+        </div>
+
+        {!isOnline ? (
+          <Card className="p-6 text-center bg-surface border-border">
+            <PowerOff className="w-12 h-12 text-inactive mx-auto mb-3" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              Estás desconectado
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Conéctate para empezar a recibir pedidos y ganar dinero
+            </p>
+            <Button 
+              onClick={toggleOnlineStatus}
+              className="bg-success hover:bg-success/90 text-success-foreground"
+            >
+              <Power className="w-4 h-4 mr-2" />
+              Conectarse
+            </Button>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {mockOrders.map((order) => (
+              <Card key={order.id} className="p-4 bg-surface border-border hover:bg-surface-elevated transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-10 h-10 bg-success/20 rounded-lg flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-success">{order.earnings}</p>
+                      <p className="text-xs text-muted-foreground">Ganancia estimada</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Pedido</p>
+                    <p className="text-sm font-medium text-foreground">{order.id}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-warning rounded-full" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Recoger en: {order.storeName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{order.storeDistance}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-primary rounded-full" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Entregar en: {order.deliveryZone}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Distancia total: {order.totalDistance}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-1 text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-sm">{order.estimatedTime}</span>
+                  </div>
+                  
+                  <Button
+                    onClick={() => handleAcceptOrder(order)}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-6"
+                  >
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Aceptar pedido
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
