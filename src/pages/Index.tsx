@@ -6,6 +6,7 @@ import VehicleDocuments from '@/components/VehicleDocuments';
 import DriverProfile from '@/components/DriverProfile';
 import Earnings from '@/components/Earnings';
 import SplashScreen from '@/components/SplashScreen';
+import AuthScreen from '@/components/AuthScreen';
 
 interface Order {
   id: string;
@@ -18,6 +19,7 @@ interface Order {
 }
 
 const Index = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [currentView, setCurrentView] = useState<'registration' | 'dashboard' | 'delivery' | 'documents' | 'profile' | 'earnings'>('registration');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -56,7 +58,15 @@ const Index = () => {
     setShowSplash(false);
   };
 
+  const handleAuthenticated = () => {
+    setIsAuthenticated(true);
+  };
+
   const renderCurrentView = () => {
+    if (!isAuthenticated) {
+      return <AuthScreen onAuthenticated={handleAuthenticated} />;
+    }
+
     if (showSplash) {
       return <SplashScreen onComplete={handleSplashComplete} />;
     }
