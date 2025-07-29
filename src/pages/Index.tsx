@@ -5,6 +5,7 @@ import Registration from '@/components/Registration';
 import VehicleDocuments from '@/components/VehicleDocuments';
 import DriverProfile from '@/components/DriverProfile';
 import Earnings from '@/components/Earnings';
+import SplashScreen from '@/components/SplashScreen';
 
 interface Order {
   id: string;
@@ -17,6 +18,7 @@ interface Order {
 }
 
 const Index = () => {
+  const [showSplash, setShowSplash] = useState(true);
   const [currentView, setCurrentView] = useState<'registration' | 'dashboard' | 'delivery' | 'documents' | 'profile' | 'earnings'>('registration');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -50,7 +52,15 @@ const Index = () => {
     setCurrentView('dashboard');
   };
 
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
   const renderCurrentView = () => {
+    if (showSplash) {
+      return <SplashScreen onComplete={handleSplashComplete} />;
+    }
+
     switch (currentView) {
       case 'registration':
         return (
