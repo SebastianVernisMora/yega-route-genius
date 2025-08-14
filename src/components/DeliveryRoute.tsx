@@ -20,27 +20,31 @@ interface DeliveryRouteProps {
 }
 
 const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
-  const [currentStep, setCurrentStep] = useState<'to_store' | 'at_store' | 'to_customer' | 'delivered'>('to_store');
+  const [status, setStatus] = useState<'assignable' | 'take' | 'en_route' | 'delivered'>('assignable');
   const { toast } = useToast();
 
-  const handleArrivedAtStore = () => {
-    setCurrentStep('at_store');
+  const handleTakeOrder = () => {
+    // Lógica para simular la llamada a la API
+    console.log('Order taken');
+    setStatus('take');
     toast({
-      title: "¡Has llegado a la tienda!",
-      description: "Recoge el pedido y confirma cuando esté listo",
+      title: "¡Orden aceptada!",
+      description: "Dirígete a la tienda para recoger el pedido.",
     });
   };
 
-  const handlePickedUpOrder = () => {
-    setCurrentStep('to_customer');
+  const handleEnRoute = () => {
+    console.log('Order en route');
+    setStatus('en_route');
     toast({
       title: "Pedido recogido",
-      description: "Dirígete al cliente para la entrega",
+      description: "Ahora estás en ruta hacia el cliente.",
     });
   };
 
   const handleDelivered = () => {
-    setCurrentStep('delivered');
+    console.log('Order delivered');
+    setStatus('delivered');
     toast({
       title: "¡Entrega completada!",
       description: `Has ganado ${order.earnings}`,
@@ -48,30 +52,30 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
   };
 
   const getStepConfig = () => {
-    switch (currentStep) {
-      case 'to_store':
+    switch (status) {
+      case 'assignable':
+        return {
+          title: 'Nueva Orden Asignada',
+          subtitle: 'Revisa los detalles y acepta la entrega.',
+          buttonText: 'Aceptar Entrega',
+          buttonAction: handleTakeOrder,
+          showRoute: true,
+          routeColor: 'primary'
+        };
+      case 'take':
         return {
           title: 'Dirígete a la tienda',
           subtitle: 'Recoge el pedido del comercio',
-          buttonText: 'He llegado a la tienda',
-          buttonAction: handleArrivedAtStore,
+          buttonText: 'He recogido el Pedido',
+          buttonAction: handleEnRoute,
           showRoute: true,
           routeColor: 'warning'
         };
-      case 'at_store':
+      case 'en_route':
         return {
-          title: 'En la tienda',
-          subtitle: 'Recoge el pedido y verifica el contenido',
-          buttonText: 'Pedido recogido',
-          buttonAction: handlePickedUpOrder,
-          showRoute: false,
-          routeColor: 'warning'
-        };
-      case 'to_customer':
-        return {
-          title: 'Dirígete al cliente',
+          title: 'En ruta al cliente',
           subtitle: 'Entrega el pedido en la dirección indicada',
-          buttonText: 'Pedido entregado',
+          buttonText: 'Marcar como Entregado',
           buttonAction: handleDelivered,
           showRoute: true,
           routeColor: 'primary'
@@ -80,7 +84,7 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
         return {
           title: '¡Entrega completada!',
           subtitle: 'El pedido ha sido entregado exitosamente',
-          buttonText: 'Buscar nuevo pedido',
+          buttonText: 'Buscar nueva orden',
           buttonAction: onBack,
           showRoute: false,
           routeColor: 'success'
@@ -122,8 +126,8 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
               <Navigation className="w-12 h-12 text-primary mx-auto mb-2" />
               <p className="text-muted-foreground text-sm">Mapa de navegación</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {currentStep === 'to_store' ? 'Ruta a la tienda' : 
-                 currentStep === 'to_customer' ? 'Ruta al cliente' : 'Ubicación actual'}
+                {status === 'assignable' || status === 'take' ? 'Ruta a la tienda' : 
+                 status === 'en_route' ? 'Ruta al cliente' : 'Ubicación actual'}
               </p>
             </div>
           </div>
@@ -167,25 +171,27 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
           {/* Progress Steps */}
           <div className="flex items-center space-x-2 mb-4">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              ['at_store', 'to_customer', 'delivered'].includes(currentStep) 
+              ['en_route', 'delivered'].includes(status) 
                 ? 'bg-success text-success-foreground' 
-                : 'bg-warning text-warning-foreground'
+                : status === 'take'
+                  ? 'bg-warning text-warning-foreground'
+                  : 'bg-muted text-muted-foreground'
             }`}>
-              {['at_store', 'to_customer', 'delivered'].includes(currentStep) 
+              {['en_route', 'delivered'].includes(status) 
                 ? <CheckCircle className="w-4 h-4" /> 
                 : <MapPin className="w-4 h-4" />}
             </div>
             <div className={`flex-1 h-0.5 ${
-              ['to_customer', 'delivered'].includes(currentStep) ? 'bg-success' : 'bg-muted'
+              status === 'delivered' ? 'bg-success' : 'bg-muted'
             }`} />
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep === 'delivered' 
+              status === 'delivered' 
                 ? 'bg-success text-success-foreground' 
-                : ['to_customer'].includes(currentStep)
+                : status === 'en_route'
                   ? 'bg-warning text-warning-foreground'
                   : 'bg-muted text-muted-foreground'
             }`}>
-              {currentStep === 'delivered' 
+              {status === 'delivered' 
                 ? <CheckCircle className="w-4 h-4" />
                 : <MapPin className="w-4 h-4" />}
             </div>
@@ -193,7 +199,7 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
 
           {/* Current destination info */}
           <div className="bg-surface-elevated rounded-lg p-3">
-            {currentStep === 'to_store' || currentStep === 'at_store' ? (
+            {status === 'assignable' || status === 'take' ? (
               <div>
                 <p className="text-sm font-medium text-foreground mb-1">
                   🏪 {order.storeName}
@@ -224,7 +230,7 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
             {stepConfig.buttonText}
           </Button>
 
-          {(currentStep === 'to_customer' || currentStep === 'delivered') && (
+          {(status === 'en_route' || status === 'delivered') && (
             <div className="flex space-x-3">
               <Button
                 variant="outline"
