@@ -1,69 +1,69 @@
-# Delivery Driver App
+# Aplicación para Repartidores
 
-This project is a web-based application that simulates a mobile app for delivery drivers. It allows drivers to register, manage their profile and documents, view and accept delivery orders, see their earnings, and navigate delivery routes.
+Este proyecto es una aplicación web que simula una app móvil para repartidores. Permite a los conductores registrarse, gestionar su perfil y documentos, ver y aceptar pedidos de entrega, consultar sus ganancias y navegar por las rutas de entrega.
 
-## Features
+## Características
 
-- **Authentication**: Simple authentication flow.
-- **Splash Screen**: A welcome screen shown on application startup.
-- **Driver Registration**: A form for new drivers to register.
-- **Dashboard**: Displays a list of available delivery orders.
-- **Order Details**: Shows details of a selected order, including earnings, store name, distance, and estimated time.
-- **Delivery Route**: Displays the delivery route for an accepted order.
-- **Vehicle Documents**: Allows drivers to manage their vehicle documents.
-- **Driver Profile**: Allows drivers to view and manage their profile.
-- **Earnings**: Displays the driver's earnings.
+-   **Autenticación**: Flujo de autenticación sencillo.
+-   **Pantalla de Bienvenida (Splash Screen)**: Una pantalla de bienvenida que se muestra al iniciar la aplicación.
+-   **Registro de Conductor**: Un formulario para que los nuevos conductores se registren.
+-   **Panel de Control (Dashboard)**: Muestra una lista de los pedidos de entrega disponibles.
+-   **Detalles del Pedido**: Muestra los detalles de un pedido seleccionado, incluyendo ganancias, nombre de la tienda, distancia y tiempo estimado.
+-   **Ruta de Entrega**: Muestra la ruta de entrega para un pedido aceptado.
+-   **Documentos del Vehículo**: Permite a los conductores gestionar los documentos de su vehículo.
+-   **Perfil del Conductor**: Permite a los conductores ver y gestionar su perfil.
+-   **Ganancias**: Muestra las ganancias del conductor.
 
-## Technologies Used
+## Tecnologías Utilizadas
 
-- **Vite**: A fast build tool for modern web projects.
-- **React**: A JavaScript library for building user interfaces.
-- **TypeScript**: A typed superset of JavaScript.
-- **shadcn/ui**: A collection of re-usable components for React.
-- **Tailwind CSS**: A utility-first CSS framework.
-- **React Router**: For routing within the application.
-- **React Hook Form**: For building forms.
-- **TanStack Query**: For data fetching and state management.
+-   **Vite**: Una herramienta de compilación rápida para proyectos web modernos.
+-   **React**: Una biblioteca de JavaScript para construir interfaces de usuario.
+-   **TypeScript**: Un superconjunto tipado de JavaScript.
+-   **shadcn/ui**: Una colección de componentes reutilizables para React.
+-   **Tailwind CSS**: Un framework de CSS de "utility-first".
+-   **React Router**: Para el enrutamiento dentro de la aplicación.
+-   **React Hook Form**: Para construir formularios.
+-   **TanStack Query**: Para la obtención de datos y la gestión del estado.
 
-## Getting Started
+## Cómo Empezar
 
-To get a local copy up and running, follow these simple steps.
+Para obtener una copia local y ponerla en marcha, sigue estos sencillos pasos.
 
-### Prerequisites
+### Prerrequisitos
 
-- Node.js and npm
-  ```sh
-  nvm install node
-  nvm use node
-  ```
+-   Node.js y npm
+    ```sh
+    nvm install node
+    nvm use node
+    ```
 
-### Installation
+### Instalación
 
-1. Clone the repo
-   ```sh
-   git clone <YOUR_GIT_URL>
-   ```
-2. Install NPM packages
-   ```sh
-   npm install
-   ```
-3. Start the development server
-   ```sh
-   npm run dev
-   ```
+1.  Clona el repositorio
+    ```sh
+    git clone <TU_URL_DE_GIT>
+    ```
+2.  Instala los paquetes de NPM
+    ```sh
+    npm install
+    ```
+3.  Inicia el servidor de desarrollo
+    ```sh
+    npm run dev
+    ```
 
-## Application Structure
+## Estructura de la Aplicación
 
-The application is structured as a single-page application with the following components and views:
+La aplicación está estructurada como una aplicación de una sola página (SPA) con los siguientes componentes y vistas:
 
-- **`src/pages/Index.tsx`**: The main page of the application, which handles the rendering of different views based on the application state.
-- **`src/components/`**: This directory contains all the React components used in the application.
-  - **`AuthScreen.tsx`**: Handles user authentication.
-  - **`SplashScreen.tsx`**: The initial splash screen.
-  - **`Registration.tsx`**: The driver registration form.
-  - **`Dashboard.tsx`**: The main dashboard with a list of available orders.
-  - **`DeliveryRoute.tsx`**: Displays the delivery route for an accepted order.
-  - **`VehicleDocuments.tsx`**: A view for managing vehicle documents.
-  - **`DriverProfile.tsx`**: The driver's profile page.
-  - **`Earnings.tsx`**: A view to check earnings.
-- **`src/components/ui/`**: Contains the shadcn/ui components.
+-   **`src/pages/Index.tsx`**: La página principal de la aplicación, que gestiona el renderizado de las diferentes vistas en función del estado de la aplicación.
+-   **`src/components/`**: Este directorio contiene todos los componentes de React utilizados en la aplicación.
+    -   **`AuthScreen.tsx`**: Gestiona la autenticación del usuario.
+    -   **`SplashScreen.tsx`**: La pantalla de bienvenida inicial.
+    -   **`Registration.tsx`**: El formulario de registro del conductor.
+    -   **`Dashboard.tsx`**: El panel de control principal con una lista de pedidos disponibles.
+    -   **`DeliveryRoute.tsx`**: Muestra la ruta de entrega para un pedido aceptado.
+    -   **`VehicleDocuments.tsx`**: Una vista para gestionar los documentos del vehículo.
+    -   **`DriverProfile.tsx`**: La página de perfil del conductor.
+    -   **`Earnings.tsx`**: Una vista para consultar las ganancias.
+-   **`src/components/ui/`**: Contiene los componentes de shadcn/ui.
