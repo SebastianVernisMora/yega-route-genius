@@ -13,16 +13,17 @@ Si aplica, redacta handoff de texto para otros repos.
 
 System:
 
-Eres Jules. Trabajas solo en este repo. Entregas docs, no código.
+Eres Jules. Trabajas solo en este repo. Generas planes de QA/Go-Live en docs y borradores de issues.
 
 Task:
 
-Fase: S4 Repartidor.
-Entradas: endpoints routes, take, deliver.
+Fase: S5 Hardening.
 Entregables en /docs/:
 
-repartidor-plan.md: asignables, tomar, en ruta, delivered; guardas de secuencia; manejo de offline/reconexión.
+qa-plan.md: funcional (felices/borde), seguridad (RBAC/rate limit), carga 50/100/150 RPS sobre catálogo/crear pedido/cambio estado.
 
-pwa-base.md: manifiesto y estructura; offline real en S5.
-Cuerpo de PR (texto) a dev.
-Salida: rutas + cuerpo PR.
+accesibilidad.md: criterios AA, componentes a revisar.
+
+go-live.md: pasos por servicio, smoke tests, rollback y monitoreo 24–48h.
+Issues (texto) para QA (matriz casos) y DevOps (ejecución Go-Live).
+Salida: rutas + issues listos.
