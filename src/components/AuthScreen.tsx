@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AuthScreenProps {
   onAuthenticated: () => void;
@@ -13,14 +14,21 @@ const AuthScreen = ({ onAuthenticated }: AuthScreenProps) => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
 
-  const handleLogin = () => {
-    // Simulación de login exitoso
-    onAuthenticated();
+  const { login, register } = useAuth();
+  const handleLogin = async () => {
+    const ok = await login
+      .mutateAsync({ email, password })
+      .then(() => true)
+      .catch(() => false);
+    if (ok) onAuthenticated();
   };
 
-  const handleRegister = () => {
-    // Simulación de registro exitoso
-    onAuthenticated();
+  const handleRegister = async () => {
+    const ok = await register
+      .mutateAsync({ email, password, name })
+      .then(() => true)
+      .catch(() => false);
+    if (ok) onAuthenticated();
   };
 
   return (
