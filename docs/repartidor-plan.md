@@ -47,3 +47,88 @@ Dado que los repartidores pueden tener conectividad intermitente, la aplicación
   - Al recuperar la conexión, la aplicación intentará sincronizar las acciones pendientes con el servidor.
   - Se debe manejar posibles conflictos. Por ejemplo, si una orden fue cancelada por el sistema mientras el repartidor estaba offline, la acción local de "entregar" debe ser invalidada y notificada al repartidor.
   - La UI debe comunicar claramente el estado de la conexión y el estado de la sincronización.
+
+## 4. Definición de Endpoints API
+
+A continuación se detallan los endpoints que el backend debe exponer para soportar el flujo del repartidor.
+
+### 4.1 Obtener Órdenes Asignables
+
+Este endpoint recupera la lista de órdenes actualmente asignadas al repartidor que están listas para ser aceptadas.
+
+- **Endpoint:** `GET /api/v1/deliveries/assignable`
+- **Descripción:** Obtiene las órdenes con estado `assignable`.
+- **Request Body:** Ninguno.
+- **Success Response (200 OK):**
+  ```json
+  [
+    {
+      "id": "ord_123",
+      "status": "assignable",
+      "pickup_address": "Av. Siempreviva 742",
+      "delivery_address": "Calle Falsa 123",
+      "route": {
+        "distance_meters": 5200,
+        "estimated_time_seconds": 900,
+        "polyline": "encoded_polyline_string"
+      },
+      "created_at": "2024-08-15T10:00:00Z"
+    }
+  ]
+  ```
+- **Error Responses:**
+  - `401 Unauthorized`: El token del repartidor no es válido.
+
+### 4.2 Aceptar una Entrega (take)
+
+Marca una orden como aceptada por el repartidor, cambiando su estado a `en route`.
+
+- **Endpoint:** `POST /api/v1/deliveries/{deliveryId}/take`
+- **Descripción:** Confirma el inicio de una entrega.
+- **Request Body:**
+  ```json
+  {
+    "timestamp": "2024-08-15T10:05:00Z"
+  }
+  ```
+- **Success Response (200 OK):**
+  ```json
+  {
+    "id": "ord_123",
+    "status": "en route",
+    "updated_at": "2024-08-15T10:05:00Z"
+  }
+  ```
+- **Error Responses:**
+  - `401 Unauthorized`: Token inválido.
+  - `404 Not Found`: La orden con el `deliveryId` no existe.
+  - `409 Conflict`: La orden no está en estado `assignable`.
+
+### 4.3 Completar una Entrega (deliver)
+
+Marca una orden como entregada, finalizando el ciclo.
+
+- **Endpoint:** `POST /api/v1/deliveries/{deliveryId}/deliver`
+- **Descripción:** Confirma la finalización de una entrega.
+- **Request Body:**
+  ```json
+  {
+    "timestamp": "2024-08-15T10:30:00Z",
+    "proof": {
+      "type": "photo",
+      "url": "https://storage.provider/proof_of_delivery.jpg"
+    }
+  }
+  ```
+- **Success Response (200 OK):**
+  ```json
+  {
+    "id": "ord_123",
+    "status": "delivered",
+    "updated_at": "2024-08-15T10:30:00Z"
+  }
+  ```
+- **Error Responses:**
+  - `401 Unauthorized`: Token inválido.
+  - `404 Not Found`: La orden con el `deliveryId` no existe.
+  - `409 Conflict`: La orden no está en estado `en route`.
