@@ -67,3 +67,15 @@ The application is structured as a single-page application with the following co
   - **`DriverProfile.tsx`**: The driver's profile page.
   - **`Earnings.tsx`**: A view to check earnings.
 - **`src/components/ui/`**: Contains the shadcn/ui components.
+
+## Automatización de Sprint 1
+
+- Tablero: Project v2 de usuario “Sprint 1 - Yega-Repartidor”.
+- Issues del sprint: ver 
+  - 
+  - 
+- Flujo de estado automático: ver .
+
+Para listar Projects por CLI:
+
+
