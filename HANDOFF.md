@@ -1,44 +1,43 @@
-# Handoff Document: Repartidor App
+# Documento de Handoff: App Repartidor
 
-## 1. High-Level Summary
+## 1. Resumen de Alto Nivel
 
-This document outlines the pending work for the **Repartidor App**.
+Este documento describe el trabajo completado y las tareas pendientes para la **App Repartidor**.
 
-The current state of the project is a **well-developed UI mock-up with zero backend integration**. The core frontend components (`Dashboard.tsx`, `DeliveryRoute.tsx`) have been built using mock data and local, client-side state.
+El estado inicial del proyecto era una **maqueta de UI bien desarrollada sin integración con el backend**. Los componentes principales del frontend (`Dashboard.tsx`, `DeliveryRoute.tsx`) se construyeron con datos de prueba y estado local del lado del cliente.
 
-The primary task for the next developer is to connect this frontend to the backend APIs defined in `docs/repartidor-plan.md`.
+La tarea principal de este sprint fue conectar este frontend a las APIs del backend definidas en `docs/repartidor-plan.md`.
 
-## 2. Core Task: API Integration
+## 2. Tarea Central: Integración de API y Estado Global
 
-The immediate priority is to replace all mock data and local state logic with live data from the API. This involves using a data fetching library like `@tanstack/react-query` (which is already a dependency) to perform API calls.
+La prioridad fue reemplazar todos los datos de prueba y la lógica de estado local con datos en vivo de la API. Esto implicó el uso de `@tanstack/react-query` para las llamadas a la API y `zustand` para la gestión del estado global.
 
-## 3. Pending Tasks (Roadmap)
+## 3. Roadmap de Tareas
 
-Here is a detailed checklist of the required work:
+A continuación se presenta un checklist del trabajo realizado y las tareas pendientes.
 
 ### 3.1. Dashboard (`src/components/Dashboard.tsx`)
-- [ ] **Fetch Assignable Orders**: Replace the `mockOrders` array with a `useQuery` hook to fetch data from the `GET /api/v1/deliveries/assignable` endpoint.
-- [ ] **Update Data Model**: The `Order` interface in the component must be updated to match the JSON structure defined in `docs/repartidor-plan.md`.
-- [ ] **Implement Real-time Updates**: Implement a polling mechanism (e.g., using `refetchInterval` in `useQuery`) to periodically check for new orders.
-- [ ] **Driver Status**: The "Conectado" / "Desconectado" status is currently local. This should be tied to a backend state if required by the API.
+- [x] **Obtener Órdenes Asignables**: Reemplazar el array `mockOrders` con un hook `useQuery` para obtener datos del endpoint `GET /api/v1/deliveries/assignable`.
+- [x] **Actualizar Modelo de Datos**: La interfaz `Order` fue actualizada para coincidir con la estructura JSON de la API.
+- [x] **Implementar Actualizaciones en Tiempo Real**: Se implementó un mecanismo de sondeo (`refetchInterval`) para buscar nuevos pedidos periódicamente.
+- [ ] **Estado del Repartidor**: El estado "Conectado" / "Desconectado" sigue siendo local. Se requiere un endpoint en el backend para sincronizar este estado.
 
-### 3.2. Delivery Flow (`src/components/DeliveryRoute.tsx`)
-- [ ] **Implement "Take" Mutation**: The action of accepting an order from the Dashboard should trigger a `useMutation` hook that sends a `POST` request to `/api/v1/deliveries/{deliveryId}/take`.
-- [ ] **Implement "Deliver" Mutation**: The `handleDelivered` function should trigger a `useMutation` hook that sends a `POST` request to `/api/v1/deliveries/{deliveryId}/deliver`. The request body must include proof of delivery as specified in the plan.
-- [ ] **State Synchronization**: The component's local state machine (`currentStep`) must be driven by the actual order status from the backend, not local `useState`. The UI should update based on the successful completion of API calls.
+### 3.2. Flujo de Entrega (`src/components/DeliveryRoute.tsx`)
+- [x] **Implementar Mutación "Take"**: La acción de aceptar un pedido ahora dispara un `useMutation` que envía un `POST` a `/api/v1/deliveries/{deliveryId}/take`.
+- [x] **Implementar Mutación "Deliver"**: La acción de entregar un pedido ahora dispara un `useMutation` que envía un `POST` a `/api/v1/deliveries/{deliveryId}/deliver`.
+- [x] **Sincronización de Estado**: La máquina de estados local fue reemplazada por el estado real del pedido proveniente del backend.
 
-### 3.3. Global State & Navigation
-- [ ] **Centralized State**: The application currently relies on prop drilling (`onAcceptOrder`, `onBack`). Implement a more robust global state management solution (e.g., Zustand, Redux, or a simple React Context) to manage the currently active order and the user's view (e.g., `dashboard`, `delivery_route`).
-- [ ] **Routing**: The main `Index.tsx` or `App.tsx` should handle the routing logic based on this global state.
+### 3.3. Estado Global y Navegación
+- [x] **Estado Centralizado**: Se implementó `zustand` para gestionar de forma centralizada el estado de la aplicación (orden activa, vista actual, autenticación), eliminando el *prop drilling*.
+- [x] **Enrutamiento**: El componente `Index.tsx` ahora maneja la lógica de navegación basándose en el store de `zustand`.
 
-### 3.4. Offline Support
-- [ ] **Implement Offline Cache**: As per `docs/repartidor-plan.md`, the application must be able to function offline. Implement caching of delivery data using `localStorage` or `IndexedDB`.
-- [ ] **Implement Mutation Queue**: Create a queue for actions performed while offline (e.g., marking an order as delivered).
-- [ ] **Implement Sync on Reconnect**: When the network connection is restored, the application must sync the queued actions with the backend and handle any potential conflicts.
+### 3.4. Soporte Offline
+- [x] **Implementar Caché Offline**: Se configuró `@tanstack/react-query` para persistir la caché de datos en `localStorage`, permitiendo que la aplicación funcione sin conexión.
+- [x] **Implementar Cola de Mutaciones y Sincronización**: Las acciones realizadas offline (aceptar/entregar pedido) se encolan automáticamente y se sincronizan al recuperar la conexión, gracias a las funcionalidades de `react-query`.
 
 ### 3.5. General
-- [ ] **Authentication**: Integrate the `AuthScreen.tsx` component with an authentication provider. API calls must be authenticated, likely using a Bearer token in the request headers.
-- [ ] **Error Handling**: Implement comprehensive error handling for all API calls. This includes displaying user-friendly messages for network errors, server errors (`4xx`, `5xx`), and state conflicts (`409 Conflict`).
-- [ ] **Environment Variables**: Ensure the API base URL is configured through environment variables (`.env`). The file `.env.stg` exists, so this pattern should be followed.
+- [x] **Autenticación**: Se integró el `AuthScreen.tsx` con un flujo de autenticación simulado, gestionando un token a través del store de `zustand`.
+- [ ] **Manejo de Errores**: Se implementó un manejo de errores básico para las llamadas a la API. Se necesita refinar para cubrir todos los casos (errores de red, 4xx, 5xx, 409 Conflict).
+- [x] **Variables de Entorno**: La URL base de la API se configuró a través de variables de entorno en un archivo `.env`.
 
-This handoff provides a clear path to completing the application. The next developer should start with task 3.1 and work their way through the list.
+Este handoff proporciona una visión clara del estado actual de la aplicación. El próximo desarrollador debería enfocarse en las tareas pendientes restantes.

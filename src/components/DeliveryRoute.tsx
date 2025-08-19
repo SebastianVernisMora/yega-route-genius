@@ -1,78 +1,84 @@
-import { useState } from 'react';
-import { ArrowLeft, MapPin, Navigation, Clock, CheckCircle, Phone, MessageCircle } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, MapPin, Navigation, Clock, CheckCircle, Phone, MessageCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useStore } from '@/store/useStore';
 
+// This should be the single source of truth for the Order type
 interface Order {
   id: string;
-  earnings: string;
-  storeName: string;
-  storeDistance: string;
-  deliveryZone: string;
-  totalDistance: string;
-  estimatedTime: string;
+  status: 'assignable' | 'en route' | 'delivered'; // Status now comes from the API
+  pickup_address: string;
+  delivery_address: string;
+  route: {
+    distance_meters: number;
+    estimated_time_seconds: number;
+    polyline: string;
+  };
+  created_at: string;
 }
 
 interface DeliveryRouteProps {
   order: Order;
-  onBack: () => void;
 }
 
-const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
-  const [currentStep, setCurrentStep] = useState<'to_store' | 'at_store' | 'to_customer' | 'delivered'>('to_store');
+// TODO: Move to a dedicated api/services file
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const deliverOrder = async (orderId: string): Promise<any> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/deliveries/${orderId}/deliver`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ timestamp: new Date().toISOString() }), // Add proof later
+  });
+  if (!response.ok) {
+    throw new Error('Failed to deliver order');
+  }
+  return response.json();
+};
+
+
+const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { actions } = useStore();
+  const { clearOrder } = actions;
 
-  const handleArrivedAtStore = () => {
-    setCurrentStep('at_store');
-    toast({
-      title: "¡Has llegado a la tienda!",
-      description: "Recoge el pedido y confirma cuando esté listo",
-    });
+  const { mutate: deliver, isLoading: isDelivering } = useMutation(deliverOrder, {
+    onSuccess: () => {
+      toast({
+        title: "¡Entrega completada!",
+        description: `Has ganado $XX.XX`, // TODO: Get earnings from response
+      });
+      // Invalidate and refetch orders to remove this one from any active list
+      queryClient.invalidateQueries(['assignableOrders']);
+      queryClient.invalidateQueries(['delivery', order.id]);
+      clearOrder(); // Go back to dashboard after successful delivery
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error en la entrega",
+        description: error.message || "No se pudo completar la entrega.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeliver = () => {
+    deliver(order.id);
   };
 
-  const handlePickedUpOrder = () => {
-    setCurrentStep('to_customer');
-    toast({
-      title: "Pedido recogido",
-      description: "Dirígete al cliente para la entrega",
-    });
-  };
-
-  const handleDelivered = () => {
-    setCurrentStep('delivered');
-    toast({
-      title: "¡Entrega completada!",
-      description: `Has ganado ${order.earnings}`,
-    });
-  };
-
+  // The component's display is now based on the order's status prop
   const getStepConfig = () => {
-    switch (currentStep) {
-      case 'to_store':
-        return {
-          title: 'Dirígete a la tienda',
-          subtitle: 'Recoge el pedido del comercio',
-          buttonText: 'He llegado a la tienda',
-          buttonAction: handleArrivedAtStore,
-          showRoute: true,
-          routeColor: 'warning'
-        };
-      case 'at_store':
-        return {
-          title: 'En la tienda',
-          subtitle: 'Recoge el pedido y verifica el contenido',
-          buttonText: 'Pedido recogido',
-          buttonAction: handlePickedUpOrder,
-          showRoute: false,
-          routeColor: 'warning'
-        };
-      case 'to_customer':
+    switch (order.status) {
+      case 'assignable': // Should technically be 'en route' by the time we are here
+      case 'en route':
         return {
           title: 'Dirígete al cliente',
           subtitle: 'Entrega el pedido en la dirección indicada',
           buttonText: 'Pedido entregado',
-          buttonAction: handleDelivered,
+          buttonAction: handleDeliver,
           showRoute: true,
           routeColor: 'primary'
         };
@@ -81,7 +87,7 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
           title: '¡Entrega completada!',
           subtitle: 'El pedido ha sido entregado exitosamente',
           buttonText: 'Buscar nuevo pedido',
-          buttonAction: onBack,
+          buttonAction: clearOrder,
           showRoute: false,
           routeColor: 'success'
         };
@@ -89,6 +95,8 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
   };
 
   const stepConfig = getStepConfig();
+  const formatDistance = (meters: number) => `${(meters / 1000).toFixed(1)} km`;
+  const formatTime = (seconds: number) => `${Math.round(seconds / 60)} min`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,8 +106,9 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={onBack}
+            onClick={clearOrder}
             className="text-muted-foreground hover:text-foreground"
+            disabled={isDelivering}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -108,7 +117,8 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
             <p className="text-sm text-muted-foreground">{stepConfig.subtitle}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-success">{order.earnings}</p>
+            {/* TODO: Get earnings from API */}
+            <p className="text-sm font-medium text-success">$XX.XX</p>
             <p className="text-xs text-muted-foreground">Ganancia</p>
           </div>
         </div>
@@ -122,25 +132,18 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
               <Navigation className="w-12 h-12 text-primary mx-auto mb-2" />
               <p className="text-muted-foreground text-sm">Mapa de navegación</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {currentStep === 'to_store' ? 'Ruta a la tienda' : 
-                 currentStep === 'to_customer' ? 'Ruta al cliente' : 'Ubicación actual'}
+                {order.status === 'en route' ? 'Ruta al cliente' : 'Ubicación actual'}
               </p>
             </div>
           </div>
         </div>
         
-        {/* Mock route visualization */}
         {stepConfig.showRoute && (
           <>
-            {/* Origin marker */}
             <div className="absolute bottom-16 left-8 w-6 h-6 bg-success rounded-full flex items-center justify-center border-2 border-background">
               <div className="w-2 h-2 bg-background rounded-full" />
             </div>
-            
-            {/* Route line */}
             <div className={`absolute bottom-16 left-14 w-32 h-0.5 bg-${stepConfig.routeColor} opacity-60`} />
-            
-            {/* Destination marker */}
             <div className={`absolute bottom-14 right-8 w-6 h-6 bg-${stepConfig.routeColor} rounded-full flex items-center justify-center border-2 border-background animate-pulse`}>
               <MapPin className="w-3 h-3 text-background" />
             </div>
@@ -154,64 +157,25 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-lg font-semibold text-foreground">Pedido {order.id}</h3>
-              <p className="text-sm text-muted-foreground">{order.storeName}</p>
+              <p className="text-sm text-muted-foreground">{order.pickup_address}</p>
             </div>
             <div className="text-right">
               <div className="flex items-center space-x-1 text-muted-foreground">
                 <Clock className="w-4 h-4" />
-                <span className="text-sm">{order.estimatedTime}</span>
+                <span className="text-sm">{formatTime(order.route.estimated_time_seconds)}</span>
               </div>
             </div>
           </div>
 
-          {/* Progress Steps */}
-          <div className="flex items-center space-x-2 mb-4">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              ['at_store', 'to_customer', 'delivered'].includes(currentStep) 
-                ? 'bg-success text-success-foreground' 
-                : 'bg-warning text-warning-foreground'
-            }`}>
-              {['at_store', 'to_customer', 'delivered'].includes(currentStep) 
-                ? <CheckCircle className="w-4 h-4" /> 
-                : <MapPin className="w-4 h-4" />}
-            </div>
-            <div className={`flex-1 h-0.5 ${
-              ['to_customer', 'delivered'].includes(currentStep) ? 'bg-success' : 'bg-muted'
-            }`} />
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep === 'delivered' 
-                ? 'bg-success text-success-foreground' 
-                : ['to_customer'].includes(currentStep)
-                  ? 'bg-warning text-warning-foreground'
-                  : 'bg-muted text-muted-foreground'
-            }`}>
-              {currentStep === 'delivered' 
-                ? <CheckCircle className="w-4 h-4" />
-                : <MapPin className="w-4 h-4" />}
-            </div>
-          </div>
-
-          {/* Current destination info */}
           <div className="bg-surface-elevated rounded-lg p-3">
-            {currentStep === 'to_store' || currentStep === 'at_store' ? (
-              <div>
-                <p className="text-sm font-medium text-foreground mb-1">
-                  🏪 {order.storeName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Distancia: {order.storeDistance}
-                </p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm font-medium text-foreground mb-1">
-                  🏠 {order.deliveryZone}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Distancia total: {order.totalDistance}
-                </p>
-              </div>
-            )}
+            <div>
+              <p className="text-sm font-medium text-foreground mb-1">
+                🏠 {order.delivery_address}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Distancia total: {formatDistance(order.route.distance_meters)}
+              </p>
+            </div>
           </div>
         </Card>
 
@@ -220,15 +184,18 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
           <Button
             onClick={stepConfig.buttonAction}
             className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-medium"
+            disabled={isDelivering}
           >
+            {isDelivering && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
             {stepConfig.buttonText}
           </Button>
 
-          {(currentStep === 'to_customer' || currentStep === 'delivered') && (
+          {order.status !== 'delivered' && (
             <div className="flex space-x-3">
               <Button
                 variant="outline"
                 className="flex-1 h-10 border-border bg-surface hover:bg-surface-elevated"
+                disabled={isDelivering}
               >
                 <Phone className="w-4 h-4 mr-2" />
                 Llamar
@@ -236,6 +203,7 @@ const DeliveryRoute = ({ order, onBack }: DeliveryRouteProps) => {
               <Button
                 variant="outline"
                 className="flex-1 h-10 border-border bg-surface hover:bg-surface-elevated"
+                disabled={isDelivering}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Mensaje

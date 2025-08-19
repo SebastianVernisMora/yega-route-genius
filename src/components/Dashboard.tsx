@@ -1,60 +1,59 @@
 import { useState } from 'react';
-import { MapPin, Clock, DollarSign, Navigation, Power, PowerOff, FileText, User, TrendingUp, Menu } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { MapPin, Clock, DollarSign, Navigation, Power, PowerOff, FileText, User, TrendingUp, Menu, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useStore } from '@/store/useStore';
 
+// TODO: Move to a dedicated types/interfaces file
 interface Order {
   id: string;
-  earnings: string;
-  storeName: string;
-  storeDistance: string;
-  deliveryZone: string;
-  totalDistance: string;
-  estimatedTime: string;
+  status: 'assignable';
+  pickup_address: string;
+  delivery_address: string;
+  route: {
+    distance_meters: number;
+    estimated_time_seconds: number;
+    polyline: string;
+  };
+  created_at: string;
 }
 
-const mockOrders: Order[] = [
-  {
-    id: "YEGA-1025",
-    earnings: "$45.00",
-    storeName: "McDonald's Zona Rosa",
-    storeDistance: "1.2 km",
-    deliveryZone: "Colonia Roma Norte",
-    totalDistance: "4.5 km",
-    estimatedTime: "25 min"
-  },
-  {
-    id: "YEGA-1026",
-    earnings: "$38.50",
-    storeName: "Starbucks Polanco",
-    storeDistance: "0.8 km",
-    deliveryZone: "Santa Fe",
-    totalDistance: "6.2 km",
-    estimatedTime: "30 min"
-  },
-  {
-    id: "YEGA-1027",
-    earnings: "$52.00",
-    storeName: "KFC Insurgentes",
-    storeDistance: "2.1 km",
-    deliveryZone: "Colonia Condesa",
-    totalDistance: "3.8 km",
-    estimatedTime: "22 min"
+// TODO: Move to a dedicated api/services file
+// TODO: Use environment variables for API base URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const fetchAssignableOrders = async (): Promise<Order[]> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/deliveries/assignable`);
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
   }
-];
+  return response.json();
+};
 
 interface DashboardProps {
-  onAcceptOrder: (order: Order) => void;
-  onNavigateToDocuments: () => void;
-  onNavigateToProfile: () => void;
-  onNavigateToEarnings: () => void;
+  onAcceptOrder: (orderId: string) => void;
 }
 
-const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, onNavigateToEarnings }: DashboardProps) => {
+const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
   const [isOnline, setIsOnline] = useState(false);
   const [todayEarnings] = useState("$0.00");
   const { toast } = useToast();
+  const { actions } = useStore();
+  const { setView } = actions;
+
+  const { 
+    data: orders, 
+    isLoading, 
+    isError,
+    error 
+  } = useQuery<Order[], Error>({
+    queryKey: ['assignableOrders'],
+    queryFn: fetchAssignableOrders,
+    enabled: isOnline, // Only fetch when online
+    refetchInterval: 10000, // Refetch every 10 seconds
+  });
 
   const toggleOnlineStatus = () => {
     setIsOnline(!isOnline);
@@ -73,8 +72,17 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
       });
       return;
     }
-    onAcceptOrder(order);
+    onAcceptOrder(order.id);
   };
+
+  const formatDistance = (meters: number) => {
+    if (meters < 1000) return `${meters} m`;
+    return `${(meters / 1000).toFixed(1)} km`;
+  }
+
+  const formatTime = (seconds: number) => {
+    return `${Math.round(seconds / 60)} min`;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,7 +100,7 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={onNavigateToProfile}>
+            <Button variant="ghost" size="sm" onClick={() => setView('profile')}>
               <Menu className="w-4 h-4" />
             </Button>
             <Button
@@ -129,7 +137,7 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
         </div>
         
         {/* Mock markers */}
-        {isOnline && (
+        {isOnline && orders && orders.length > 0 && (
           <>
             <div className="absolute top-12 left-8 w-4 h-4 bg-warning rounded-full animate-pulse border-2 border-background" />
             <div className="absolute top-20 right-12 w-4 h-4 bg-warning rounded-full animate-pulse border-2 border-background" />
@@ -145,7 +153,7 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
             Pedidos Disponibles
           </h2>
           <span className="text-sm text-muted-foreground">
-            {isOnline ? `${mockOrders.length} disponibles` : "Desconectado"}
+            {isOnline ? `${orders?.length ?? 0} disponibles` : "Desconectado"}
           </span>
         </div>
 
@@ -166,9 +174,25 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
               Conectarse
             </Button>
           </Card>
-        ) : (
+        ) : isLoading ? (
+          <div className="text-center p-6">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+            <p className="mt-2 text-muted-foreground">Buscando pedidos...</p>
+          </div>
+        ) : isError ? (
+          <Card className="p-6 text-center bg-destructive/10 border-destructive/50">
+            <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-3" />
+            <h3 className="text-lg font-medium text-destructive mb-2">
+              Error de conexión
+            </h3>
+            <p className="text-destructive/80">
+              No pudimos cargar los pedidos. Revisa tu conexión a internet.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">{error?.message}</p>
+          </Card>
+        ) : orders && orders.length > 0 ? (
           <div className="space-y-3">
-            {mockOrders.map((order) => (
+            {orders.map((order) => (
               <Card key={order.id} className="p-4 bg-surface border-border hover:bg-surface-elevated transition-colors">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-2">
@@ -176,7 +200,8 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
                       <DollarSign className="w-5 h-5 text-success" />
                     </div>
                     <div>
-                      <p className="text-xl font-bold text-success">{order.earnings}</p>
+                      {/* TODO: API should provide earnings */}
+                      <p className="text-xl font-bold text-success">$XX.XX</p>
                       <p className="text-xs text-muted-foreground">Ganancia estimada</p>
                     </div>
                   </div>
@@ -191,9 +216,10 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
                     <div className="w-2 h-2 bg-warning rounded-full" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
-                        Recoger en: {order.storeName}
+                        Recoger en: {order.pickup_address}
                       </p>
-                      <p className="text-xs text-muted-foreground">{order.storeDistance}</p>
+                      {/* TODO: API should provide store distance */}
+                      <p className="text-xs text-muted-foreground">X.X km</p>
                     </div>
                   </div>
                   
@@ -201,10 +227,10 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
                     <div className="w-2 h-2 bg-primary rounded-full" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
-                        Entregar en: {order.deliveryZone}
+                        Entregar en: {order.delivery_address}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Distancia total: {order.totalDistance}
+                        Distancia total: {formatDistance(order.route.distance_meters)}
                       </p>
                     </div>
                   </div>
@@ -213,7 +239,7 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1 text-muted-foreground">
                     <Clock className="w-4 h-4" />
-                    <span className="text-sm">{order.estimatedTime}</span>
+                    <span className="text-sm">{formatTime(order.route.estimated_time_seconds)}</span>
                   </div>
                   
                   <Button
@@ -227,13 +253,23 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
               </Card>
             ))}
           </div>
+        ) : (
+           <Card className="p-6 text-center bg-surface border-border">
+            <MapPin className="w-12 h-12 text-primary mx-auto mb-3" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              No hay pedidos por ahora
+            </h3>
+            <p className="text-muted-foreground">
+              Te notificaremos cuando haya un nuevo pedido disponible en tu zona.
+            </p>
+          </Card>
         )}
 
         {/* Quick Access Menu */}
         <div className="grid grid-cols-3 gap-3 mt-4">
           <Button
             variant="outline"
-            onClick={onNavigateToDocuments}
+            onClick={() => setView('documents')}
             className="flex flex-col items-center p-4 h-auto"
           >
             <FileText className="w-6 h-6 mb-2" />
@@ -241,7 +277,7 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
           </Button>
           <Button
             variant="outline"
-            onClick={onNavigateToProfile}
+            onClick={() => setView('profile')}
             className="flex flex-col items-center p-4 h-auto"
           >
             <User className="w-6 h-6 mb-2" />
@@ -249,7 +285,7 @@ const Dashboard = ({ onAcceptOrder, onNavigateToDocuments, onNavigateToProfile, 
           </Button>
           <Button
             variant="outline"
-            onClick={onNavigateToEarnings}
+            onClick={() => setView('earnings')}
             className="flex flex-col items-center p-4 h-auto"
           >
             <TrendingUp className="w-6 h-6 mb-2" />

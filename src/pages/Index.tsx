@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { useStore } from '@/store/useStore';
 import Dashboard from '@/components/Dashboard';
 import DeliveryRoute from '@/components/DeliveryRoute';
 import Registration from '@/components/Registration';
@@ -8,99 +10,205 @@ import Earnings from '@/components/Earnings';
 import SplashScreen from '@/components/SplashScreen';
 import AuthScreen from '@/components/AuthScreen';
 
+// The Order type is now managed in the store, but we might need it here for mutations
 interface Order {
   id: string;
-  earnings: string;
-  storeName: string;
-  storeDistance: string;
-  deliveryZone: string;
-  totalDistance: string;
-  estimatedTime: string;
+  status: 'assignable' | 'en route' | 'delivered';
+  pickup_address: string;
+  delivery_address: string;
+  route: {
+    distance_meters: number;
+    estimated_time_seconds: number;
+    polyline: string;
+  };
+  created_at: string;
 }
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { useStore } from '@/store/useStore';
+import Dashboard from '@/components/Dashboard';
+import DeliveryRoute from '@/components/DeliveryRoute';
+import Registration from '@/components/Registration';
+import VehicleDocuments from '@/components/VehicleDocuments';
+import DriverProfile from '@/components/DriverProfile';
+import Earnings from '@/components/Earnings';
+import AuthScreen from '@/components/AuthScreen';
+
+// The Order type is now managed in the store, but we might need it here for mutations
+interface Order {
+  id: string;
+  status: 'assignable' | 'en route' | 'delivered';
+  pickup_address: string;
+  delivery_address: string;
+  route: {
+    distance_meters: number;
+    estimated_time_seconds: number;
+    polyline: string;
+  };
+  created_at: string;
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const takeOrder = async (orderId: string): Promise<Order> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/deliveries/${orderId}/take`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ timestamp: new Date().toISOString() }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Failed to take order' }));
+    throw new Error(errorData.message || 'Failed to take order');
+  }
+  return response.json();
+};
+
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
-  const [currentView, setCurrentView] = useState<'registration' | 'dashboard' | 'delivery' | 'documents' | 'profile' | 'earnings'>('registration');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // State is now managed by Zustand
+  const { currentView, selectedOrder, actions } = useStore();
+  const { setView, selectOrder, clearOrder } = actions;
 
-  const handleAcceptOrder = (order: Order) => {
-    setSelectedOrder(order);
-    setCurrentView('delivery');
+  const { mutate: acceptOrder, isLoading: isAcceptingOrder } = useMutation(takeOrder, {
+    onSuccess: (data) => {
+      toast({
+        title: "¡Pedido aceptado!",
+        description: "Dirígete al punto de recogida.",
+      });
+      selectOrder(data); // This now also handles setting the view
+      queryClient.invalidateQueries(['assignableOrders']);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al aceptar",
+        description: error.message || "No se pudo aceptar el pedido.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const renderCurrentView = () => {
+    // Simplified view rendering logic
+    switch (currentView) {
+      case 'auth':
+        return <AuthScreen />;
+      case 'registration':
+        return <Registration onComplete={() => setView('dashboard')} onBack={() => setView('auth')} />;
+      case 'dashboard':
+        return <Dashboard 
+            onAcceptOrder={acceptOrder}
+          />;
+      case 'delivery':
+        return selectedOrder && <DeliveryRoute order={selectedOrder} />;
+      case 'documents':
+        return <VehicleDocuments onBack={() => setView('dashboard')} />;
+      case 'profile':
+        return <DriverProfile onBack={() => setView('dashboard')} />;
+      case 'earnings':
+        return <Earnings onBack={() => setView('dashboard')} />;
+      default:
+        return <AuthScreen />; // Fallback to auth screen
+    }
   };
 
-  const handleBackToDashboard = () => {
-    setCurrentView('dashboard');
-    setSelectedOrder(null);
-  };
+  return (
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-8">
+      {/* Phone mockup container */}
+      <div className="relative">
+        {/* Phone frame */}
+        <div className="w-[375px] h-[812px] bg-black rounded-[45px] p-2 shadow-2xl">
+          {/* Screen */}
+          <div className="w-full h-full bg-background rounded-[35px] overflow-hidden relative">
+            {/* Notch */}
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[150px] h-[25px] bg-black rounded-b-2xl z-10"></div>
+            {/* App content */}
+            <div className="w-full h-full overflow-y-auto">
+              {renderCurrentView()}
+            </div>
+             {isAcceptingOrder && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
+                <div className="bg-background p-4 rounded-lg flex items-center space-x-2">
+                  <p>Aceptando pedido...</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Home indicator */}
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-[134px] h-[5px] bg-white rounded-full"></div>
+      </div>
+    </div>
+  );
+};
 
-  const handleCompleteRegistration = () => {
-    setCurrentView('dashboard');
-  };
+export default Index;
 
-  const handleNavigateToDocuments = () => {
-    setCurrentView('documents');
-  };
+const takeOrder = async (orderId: string): Promise<Order> => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/deliveries/${orderId}/take`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ timestamp: new Date().toISOString() }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Failed to take order' }));
+    throw new Error(errorData.message || 'Failed to take order');
+  }
+  return response.json();
+};
 
-  const handleNavigateToProfile = () => {
-    setCurrentView('profile');
-  };
+const Index = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // State is now managed by Zustand
+  const { isAuthenticated, currentView, selectedOrder, actions } = useStore();
+  const { setView, selectOrder, clearOrder, login } = actions;
 
-  const handleNavigateToEarnings = () => {
-    setCurrentView('earnings');
-  };
-
-  const handleBackToMain = () => {
-    setCurrentView('dashboard');
-  };
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-  };
-
-  const handleAuthenticated = () => {
-    setIsAuthenticated(true);
-  };
+  const { mutate: acceptOrder, isLoading: isAcceptingOrder } = useMutation(takeOrder, {
+    onSuccess: (data) => {
+      toast({
+        title: "¡Pedido aceptado!",
+        description: "Dirígete al punto de recogida.",
+      });
+      selectOrder(data); // This now also handles setting the view
+      queryClient.invalidateQueries(['assignableOrders']);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al aceptar",
+        description: error.message || "No se pudo aceptar el pedido.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const renderCurrentView = () => {
     if (!isAuthenticated) {
-      return <AuthScreen onAuthenticated={handleAuthenticated} />;
+      return <AuthScreen onAuthenticated={login} />;
     }
 
-    if (showSplash) {
-      return <SplashScreen onComplete={handleSplashComplete} />;
-    }
-
+    // Simplified view rendering logic
     switch (currentView) {
       case 'registration':
-        return (
-          <Registration 
-            onComplete={handleCompleteRegistration}
-            onBack={() => setCurrentView('registration')}
-          />
-        );
+        return <Registration onComplete={() => setView('dashboard')} onBack={() => setView('registration')} />;
       case 'dashboard':
-        return (
-          <Dashboard 
-            onAcceptOrder={handleAcceptOrder}
-            onNavigateToDocuments={handleNavigateToDocuments}
-            onNavigateToProfile={handleNavigateToProfile}
-            onNavigateToEarnings={handleNavigateToEarnings}
-          />
-        );
+        return <Dashboard 
+            onAcceptOrder={acceptOrder}
+            onNavigateToDocuments={() => setView('documents')}
+            onNavigateToProfile={() => setView('profile')}
+            onNavigateToEarnings={() => setView('earnings')}
+          />;
       case 'delivery':
-        return selectedOrder && (
-          <DeliveryRoute 
-            order={selectedOrder} 
-            onBack={handleBackToDashboard} 
-          />
-        );
+        return selectedOrder && <DeliveryRoute order={selectedOrder} onBack={clearOrder} />;
       case 'documents':
-        return <VehicleDocuments onBack={handleBackToMain} />;
+        return <VehicleDocuments onBack={() => setView('dashboard')} />;
       case 'profile':
-        return <DriverProfile onBack={handleBackToMain} />;
+        return <DriverProfile onBack={() => setView('dashboard')} />;
       case 'earnings':
-        return <Earnings onBack={handleBackToMain} />;
+        return <Earnings onBack={() => setView('dashboard')} />;
       default:
         return null;
     }
@@ -120,6 +228,13 @@ const Index = () => {
             <div className="w-full h-full overflow-y-auto">
               {renderCurrentView()}
             </div>
+             {isAcceptingOrder && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
+                <div className="bg-background p-4 rounded-lg flex items-center space-x-2">
+                  <p>Aceptando pedido...</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {/* Home indicator */}
