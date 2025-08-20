@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MapPin, Clock, DollarSign, Navigation, Power, PowerOff, FileText, User, TrendingUp, Menu, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/store/useStore';
-import { handleApiError } from '@/lib/apiErrorHandler';
 
 // TODO: Move to a dedicated types/interfaces file
 interface Order {
@@ -38,17 +37,20 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
-  const [isOnline, setIsOnline] = useState(false);
   const [todayEarnings] = useState("$0.00");
   const { toast } = useToast();
-  const { actions } = useStore();
-  const { setView } = actions;
+  const { isOnline, actions } = useStore();
+  const { setView, toggleOnlineStatus, fetchOnlineStatus } = actions;
 
-  const {
-    data: orders,
-    isLoading,
+  useEffect(() => {
+    fetchOnlineStatus();
+  }, [fetchOnlineStatus]);
+
+  const { 
+    data: orders, 
+    isLoading, 
     isError,
-    error
+    error 
   } = useQuery<Order[], Error>({
     queryKey: ['assignableOrders'],
     queryFn: fetchAssignableOrders,
@@ -56,20 +58,11 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
     refetchInterval: 10000, // Refetch every 10 seconds
   });
 
-  const errorMessage = error
-    ? handleApiError(error, {
-        context: 'fetchAssignableOrders',
-        defaultMessage:
-          'No pudimos cargar los pedidos. Revisa tu conexión a internet.',
-        isCritical: false,
-      })
-    : '';
-
-  const toggleOnlineStatus = () => {
-    setIsOnline(!isOnline);
+  const handleToggleOnline = async () => {
+    const newStatus = await toggleOnlineStatus();
     toast({
-      title: isOnline ? "Te has desconectado" : "¡Estás conectado!",
-      description: isOnline ? "No recibirás nuevos pedidos" : "Ahora puedes recibir pedidos",
+      title: newStatus ? "¡Estás conectado!" : "Te has desconectado",
+      description: newStatus ? "Ahora puedes recibir pedidos" : "No recibirás nuevos pedidos",
     });
   };
 
@@ -114,12 +107,12 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
               <Menu className="w-4 h-4" />
             </Button>
             <Button
-              onClick={toggleOnlineStatus}
+              onClick={handleToggleOnline}
               variant={isOnline ? "default" : "secondary"}
               size="sm"
               className={`flex items-center space-x-2 ${
-                isOnline 
-                  ? "bg-success hover:bg-success/90 text-success-foreground" 
+                isOnline
+                  ? "bg-success hover:bg-success/90 text-success-foreground"
                   : "bg-inactive hover:bg-inactive/80 text-foreground"
               }`}
             >
@@ -177,7 +170,7 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
               Conéctate para empezar a recibir pedidos y ganar dinero
             </p>
             <Button 
-              onClick={toggleOnlineStatus}
+              onClick={handleToggleOnline}
               className="bg-success hover:bg-success/90 text-success-foreground"
             >
               <Power className="w-4 h-4 mr-2" />
@@ -195,7 +188,10 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
             <h3 className="text-lg font-medium text-destructive mb-2">
               Error de conexión
             </h3>
-            <p className="text-destructive/80">{errorMessage}</p>
+            <p className="text-destructive/80">
+              No pudimos cargar los pedidos. Revisa tu conexión a internet.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">{error?.message}</p>
           </Card>
         ) : orders && orders.length > 0 ? (
           <div className="space-y-3">
