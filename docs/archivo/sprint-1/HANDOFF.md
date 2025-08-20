@@ -6,7 +6,7 @@ Este documento describe el trabajo completado y las tareas pendientes para la **
 
 El estado inicial del proyecto era una **maqueta de UI bien desarrollada sin integración con el backend**. Los componentes principales del frontend (`Dashboard.tsx`, `DeliveryRoute.tsx`) se construyeron con datos de prueba y estado local del lado del cliente.
 
-La tarea principal de este sprint fue conectar este frontend a las APIs del backend definidas en `docs/repartidor-plan.md`.
+La tarea principal de este sprint fue conectar este frontend a las APIs del backend definidas en `../../repartidor-plan.md`.
 
 ## 2. Tarea Central: Integración de API y Estado Global
 
