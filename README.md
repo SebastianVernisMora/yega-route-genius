@@ -64,7 +64,7 @@ Para obtener una copia local y ponerla en funcionamiento, sigue estos sencillos 
 
 La aplicación está estructurada como una aplicación de una sola página con los siguientes componentes y vistas:
 
--   **`src/pages/Index.tsx`**: La página principal de la aplicación, que gestiona el renderizado de las diferentes vistas en función del estado de la aplicación.
+-   **`src/pages/Index.tsx`**: Actúa como el componente principal y controlador de vistas. Utiliza Zustand para gestionar el estado global de la aplicación y renderiza dinámicamente las diferentes vistas (`AuthScreen`, `Dashboard`, `DeliveryRoute`, etc.) según el estado de autenticación del usuario y la vista actual.
 -   **`src/components/`**: Este directorio contiene todos los componentes de React utilizados en la aplicación.
     -   **`AuthScreen.tsx`**: Gestiona la autenticación del usuario.
     -   **`SplashScreen.tsx`**: La pantalla de bienvenida inicial.
