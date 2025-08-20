@@ -30,14 +30,22 @@ interface AppState {
   };
 }
 
+const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
 export const useStore = create<AppState>((set) => ({
-  isAuthenticated: false, // Default to false
-  authToken: null,
-  currentView: 'auth',
+  isAuthenticated: !!token,
+  authToken: token,
+  currentView: token ? 'dashboard' : 'auth',
   selectedOrder: null,
   actions: {
-    login: (token) => set({ isAuthenticated: true, authToken: token, currentView: 'dashboard' }),
-    logout: () => set({ isAuthenticated: false, authToken: null, currentView: 'auth' }),
+    login: (token) => {
+      localStorage.setItem('authToken', token);
+      set({ isAuthenticated: true, authToken: token, currentView: 'dashboard' });
+    },
+    logout: () => {
+      localStorage.removeItem('authToken');
+      set({ isAuthenticated: false, authToken: null, currentView: 'auth' });
+    },
     setView: (view) => set({ currentView: view }),
     selectOrder: (order) => set({ selectedOrder: order, currentView: 'delivery' }),
     clearOrder: () => set({ selectedOrder: null, currentView: 'dashboard' }),

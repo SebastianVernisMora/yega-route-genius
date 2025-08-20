@@ -8,28 +8,32 @@ import { useStore } from '@/store/useStore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const loginUser = async (credentials: any) => {
-  // SIMULATED API CALL
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (credentials.email === 'test@yega.dev' && credentials.password === 'password') {
-        resolve({ token: 'fake-jwt-token' });
-      } else {
-        reject(new Error('Invalid credentials'));
-      }
-    }, 1000);
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials),
   });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Login failed');
+  }
+  return data;
 };
 
 const registerUser = async (userInfo: any) => {
-  // SIMULATED API CALL
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ token: 'fake-jwt-token-new-user' });
-    }, 1000);
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(userInfo),
   });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Registration failed');
+  }
+  return data;
 };
 
 

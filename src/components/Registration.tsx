@@ -1,10 +1,27 @@
 import { useState } from 'react';
-import { ArrowLeft, User, Phone, Mail, MapPin, Camera, CheckCircle } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { ArrowLeft, User, Phone, Mail, MapPin, Camera, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useStore } from '@/store/useStore';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+const registerUser = async (data: any) => {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const resData = await response.json();
+  if (!response.ok) {
+    throw new Error(resData.message || 'Registration failed');
+  }
+  return resData;
+};
 
 interface RegistrationProps {
   onComplete: () => void;
@@ -23,6 +40,26 @@ const Registration = ({ onComplete, onBack }: RegistrationProps) => {
     emergencyPhone: ''
   });
   const { toast } = useToast();
+  const { actions } = useStore();
+  const { login } = actions;
+
+  const { mutate: doRegister, isLoading } = useMutation(registerUser, {
+    onSuccess: (data: any) => {
+      login(data.token);
+      toast({
+        title: "¡Registro completado!",
+        description: "Tu cuenta ha sido creada exitosamente",
+      });
+      onComplete();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error de registro',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -32,11 +69,7 @@ const Registration = ({ onComplete, onBack }: RegistrationProps) => {
     if (step < 3) {
       setStep(step + 1);
     } else {
-      toast({
-        title: "¡Registro completado!",
-        description: "Tu cuenta ha sido creada exitosamente",
-      });
-      onComplete();
+      doRegister(formData);
     }
   };
 
@@ -239,14 +272,16 @@ const Registration = ({ onComplete, onBack }: RegistrationProps) => {
           )}
           <Button
             onClick={handleNextStep}
-            disabled={!canProceed()}
+            disabled={!canProceed() || isLoading}
             className={`flex-1 ${
-              step === 3 
-                ? 'bg-success hover:bg-success/90 text-success-foreground' 
+              step === 3
+                ? 'bg-success hover:bg-success/90 text-success-foreground'
                 : 'bg-primary hover:bg-primary/90 text-primary-foreground'
             }`}
           >
-            {step === 3 ? (
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : step === 3 ? (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Completar registro
