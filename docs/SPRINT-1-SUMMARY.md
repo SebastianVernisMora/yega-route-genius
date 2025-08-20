@@ -4,7 +4,7 @@
 El objetivo del Sprint 1 fue establecer la estructura fundamental de la aplicación PWA para repartidores, enfocándose en la visualización de pedidos y el flujo de entrega inicial.
 
 ## Trabajo Completado
-Se completaron las siguientes tareas, que constituyeron el alcance total del sprint. Para más detalles, consultar el documento `ISSUES-Sprint-1.md`.
+Se completaron las siguientes tareas, que constituyeron el alcance total del sprint. Para más detalles, consultar el documento `archivo/sprint-1/ISSUES-Sprint-1.md`.
 
 1.  **Dashboard de Pedidos Disponibles (`PedidosDashboard`)**
     -   Se implementó una pantalla que muestra una lista de pedidos de entrega disponibles para el repartidor.
@@ -22,4 +22,4 @@ Se completaron las siguientes tareas, que constituyeron el alcance total del spr
 ## Conclusión
 El Sprint 1 fue exitoso en la entrega de una versión funcional del esqueleto de la aplicación. El trabajo completado valida la arquitectura técnica elegida y proporciona una base sólida sobre la cual construir funcionalidades más complejas en los próximos sprints.
 
-**Nota sobre la documentación:** Los documentos de análisis inicial (`archivo/sprint-1/ANALISIS-SPRINT-1-ES.md` y `archivo/sprint-1/SPRINT-1-COMPREHENSIVE-ANALYSIS.md`) deben considerarse como una **hoja de ruta a largo plazo** y no como el alcance estricto de este sprint. El alcance real y el trabajo completado se reflejan en `ISSUES-Sprint-1.md` y en este resumen.
+**Nota sobre la documentación:** Los documentos de análisis inicial (`archivo/sprint-1/ANALISIS-SPRINT-1-ES.md` y `archivo/sprint-1/SPRINT-1-COMPREHENSIVE-ANALYSIS.md`) deben considerarse como una **hoja de ruta a largo plazo** y no como el alcance estricto de este sprint. El alcance real y el trabajo completado se reflejan en `archivo/sprint-1/ISSUES-Sprint-1.md` y en este resumen.
