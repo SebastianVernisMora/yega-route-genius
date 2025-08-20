@@ -91,7 +91,7 @@ const Index = () => {
             onAcceptOrder={acceptOrder}
           />;
       case 'delivery':
-        return selectedOrder && <DeliveryRoute order={selectedOrder} onBack={clearOrder} />;
+        return selectedOrder && <DeliveryRoute order={selectedOrder} />;
       case 'documents':
         return <VehicleDocuments onBack={() => setView('dashboard')} />;
       case 'profile':
