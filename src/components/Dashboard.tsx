@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/store/useStore';
+import { handleApiError } from '@/lib/apiErrorHandler';
 
 // TODO: Move to a dedicated types/interfaces file
 interface Order {
@@ -43,17 +44,26 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
   const { actions } = useStore();
   const { setView } = actions;
 
-  const { 
-    data: orders, 
-    isLoading, 
+  const {
+    data: orders,
+    isLoading,
     isError,
-    error 
+    error
   } = useQuery<Order[], Error>({
     queryKey: ['assignableOrders'],
     queryFn: fetchAssignableOrders,
     enabled: isOnline, // Only fetch when online
     refetchInterval: 10000, // Refetch every 10 seconds
   });
+
+  const errorMessage = error
+    ? handleApiError(error, {
+        context: 'fetchAssignableOrders',
+        defaultMessage:
+          'No pudimos cargar los pedidos. Revisa tu conexión a internet.',
+        isCritical: false,
+      })
+    : '';
 
   const toggleOnlineStatus = () => {
     setIsOnline(!isOnline);
@@ -185,10 +195,7 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
             <h3 className="text-lg font-medium text-destructive mb-2">
               Error de conexión
             </h3>
-            <p className="text-destructive/80">
-              No pudimos cargar los pedidos. Revisa tu conexión a internet.
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">{error?.message}</p>
+            <p className="text-destructive/80">{errorMessage}</p>
           </Card>
         ) : orders && orders.length > 0 ? (
           <div className="space-y-3">
