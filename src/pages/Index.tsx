@@ -7,6 +7,7 @@ import Registration from '@/components/Registration';
 import VehicleDocuments from '@/components/VehicleDocuments';
 import DriverProfile from '@/components/DriverProfile';
 import Earnings from '@/components/Earnings';
+import SplashScreen from '@/components/SplashScreen';
 import AuthScreen from '@/components/AuthScreen';
 
 // The Order type is now managed in the store, but we might need it here for mutations
@@ -66,21 +67,28 @@ const Index = () => {
   });
 
   const renderCurrentView = () => {
-    if (!isAuthenticated) {
-      // Pass the login action from the store to the AuthScreen
-      return <AuthScreen onAuthenticated={login} />;
+    // Handle initial splash screen
+    if (currentView === 'splash') {
+      return <SplashScreen onComplete={() => setView(isAuthenticated ? 'dashboard' : 'auth')} />;
     }
 
-    // Simplified view rendering logic
+    if (!isAuthenticated) {
+      // Unauthenticated users can only see auth or registration
+      switch (currentView) {
+        case 'auth':
+          return <AuthScreen />;
+        case 'registration':
+          return <Registration onComplete={() => setView('dashboard')} onBack={() => setView('auth')} />;
+        default:
+          return <AuthScreen />;
+      }
+    }
+
+    // Authenticated users see the main app views
     switch (currentView) {
-      case 'registration':
-        return <Registration onComplete={() => setView('dashboard')} onBack={() => setView('auth')} />;
       case 'dashboard':
         return <Dashboard 
             onAcceptOrder={acceptOrder}
-            onNavigateToDocuments={() => setView('documents')}
-            onNavigateToProfile={() => setView('profile')}
-            onNavigateToEarnings={() => setView('earnings')}
           />;
       case 'delivery':
         return selectedOrder && <DeliveryRoute order={selectedOrder} />;
@@ -91,12 +99,9 @@ const Index = () => {
       case 'earnings':
         return <Earnings onBack={() => setView('dashboard')} />;
       default:
-        // Fallback to dashboard if authenticated but view is unknown
+        // Fallback to dashboard for any other authenticated state
         return <Dashboard
             onAcceptOrder={acceptOrder}
-            onNavigateToDocuments={() => setView('documents')}
-            onNavigateToProfile={() => setView('profile')}
-            onNavigateToEarnings={() => setView('earnings')}
           />;
     }
   };
