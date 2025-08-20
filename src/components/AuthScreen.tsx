@@ -1,27 +1,76 @@
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useStore } from '@/store/useStore';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
-interface AuthScreenProps {
-  onAuthenticated: () => void;
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const AuthScreen = ({ onAuthenticated }: AuthScreenProps) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const loginUser = async (credentials: any) => {
+  // SIMULATED API CALL
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (credentials.email === 'test@yega.dev' && credentials.password === 'password') {
+        resolve({ token: 'fake-jwt-token' });
+      } else {
+        reject(new Error('Invalid credentials'));
+      }
+    }, 1000);
+  });
+};
+
+const registerUser = async (userInfo: any) => {
+  // SIMULATED API CALL
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ token: 'fake-jwt-token-new-user' });
+    }, 1000);
+  });
+};
+
+
+const AuthScreen = () => {
+  const { actions } = useStore();
+  const { login } = actions;
+  const { toast } = useToast();
+
+  const [email, setEmail] = useState('test@yega.dev');
+  const [password, setPassword] = useState('password');
   const [name, setName] = useState('');
 
+  const { mutate: doLogin, isLoading: isLoggingIn } = useMutation(loginUser, {
+    onSuccess: (data: any) => {
+      login(data.token);
+      toast({ title: '¡Bienvenido!' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error de inicio de sesión', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const { mutate: doRegister, isLoading: isRegistering } = useMutation(registerUser, {
+    onSuccess: (data: any) => {
+      login(data.token);
+      toast({ title: '¡Registro exitoso!' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error de registro', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const handleLogin = () => {
-    // Simulación de login exitoso
-    onAuthenticated();
+    doLogin({ email, password });
   };
 
   const handleRegister = () => {
-    // Simulación de registro exitoso
-    onAuthenticated();
+    doRegister({ name, email, password });
   };
+
+  const isLoading = isLoggingIn || isRegistering;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary via-primary-glow to-secondary flex items-center justify-center relative overflow-hidden">
@@ -49,10 +98,10 @@ const AuthScreen = ({ onAuthenticated }: AuthScreenProps) => {
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-white/10">
-                <TabsTrigger value="login" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
+                <TabsTrigger value="login" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary" disabled={isLoading}>
                   Iniciar Sesión
                 </TabsTrigger>
-                <TabsTrigger value="register" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary">
+                <TabsTrigger value="register" className="text-white data-[state=active]:bg-white data-[state=active]:text-primary" disabled={isLoading}>
                   Registrarse
                 </TabsTrigger>
               </TabsList>
@@ -65,6 +114,7 @@ const AuthScreen = ({ onAuthenticated }: AuthScreenProps) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
                   <Input
                     type="password"
@@ -72,12 +122,15 @@ const AuthScreen = ({ onAuthenticated }: AuthScreenProps) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
                 </div>
                 <Button 
                   onClick={handleLogin}
                   className="w-full bg-white text-primary hover:bg-white/90 hover-scale"
+                  disabled={isLoading}
                 >
+                  {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Iniciar Sesión
                 </Button>
                 <p className="text-center text-white/60 text-sm">
@@ -93,6 +146,7 @@ const AuthScreen = ({ onAuthenticated }: AuthScreenProps) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
                   <Input
                     type="email"
@@ -100,6 +154,7 @@ const AuthScreen = ({ onAuthenticated }: AuthScreenProps) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
                   <Input
                     type="password"
@@ -107,12 +162,15 @@ const AuthScreen = ({ onAuthenticated }: AuthScreenProps) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+                    disabled={isLoading}
                   />
                 </div>
                 <Button 
                   onClick={handleRegister}
                   className="w-full bg-white text-primary hover:bg-white/90 hover-scale"
+                  disabled={isLoading}
                 >
+                  {isRegistering && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Crear Cuenta
                 </Button>
                 <p className="text-center text-white/60 text-xs">
@@ -127,8 +185,9 @@ const AuthScreen = ({ onAuthenticated }: AuthScreenProps) => {
         <div className="text-center mt-6 animate-fade-in delay-300">
           <Button 
             variant="outline" 
-            onClick={onAuthenticated}
+            onClick={() => login('fake-demo-token')}
             className="text-white border-white/30 hover:bg-white/10"
+            disabled={isLoading}
           >
             Acceso Demo
           </Button>
