@@ -69,6 +69,8 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
     },
   });
 
+  const isDelivering = isLoading;
+
   const getStepConfig = () => {
     switch (order.status) {
       case 'en_route':
