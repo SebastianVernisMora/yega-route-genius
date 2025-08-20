@@ -22,8 +22,8 @@ Así, el workflow detecta el enlace y mueve el item en el Project.
 Todos los issues de este sprint usan la etiqueta: `sprint-1`.
 
 ## Tablero y backlog del sprint
-- Backlog: `docs/ISSUES-Sprint-1.md`
-- Tablero (To Do / In Progress / Done): `docs/BOARD-Sprint-1.md`
+- Backlog: `ISSUES-Sprint-1.md`
+- Tablero (To Do / In Progress / Done): `BOARD-Sprint-1.md`
 
 ## Dónde ver el Project
 El Project es de usuario (no clásico de repo). Búscalo como “Sprint 1 - Yega-Repartidor” en:

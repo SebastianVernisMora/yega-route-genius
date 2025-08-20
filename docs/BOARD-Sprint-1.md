@@ -1,10 +1,12 @@
-# 🟥 Yega-Repartidor – Sprint 1 Board
+# ✅ Yega-Repartidor – Sprint 1 Board (Finalizado)
 
 ## To Do
-- Configurar PWA básica (`manifest.json`, `service-worker.js`)
+*(Vacío)*
 
 ## In Progress
-- Flujo de Entrega (`RutaEntregaScreen`)
+*(Vacío)*
 
 ## Done
-- Dashboard de Pedidos Disponibles (`PedidosDashboard`)
+- **Dashboard de Pedidos Disponibles (`PedidosDashboard`)**: Listado de pedidos y funcionalidad de aceptación.
+- **Flujo de Entrega (`RutaEntregaScreen`)**: Implementación inicial del flujo. _(Nota: Estados intermedios como "llegada a tienda" se simplificaron en esta fase)._
+- **Configurar PWA básica (`manifest.json`, `service-worker.js`)**: Configuración inicial para capacidades PWA.

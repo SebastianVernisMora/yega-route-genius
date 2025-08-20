@@ -1,13 +1,17 @@
-# 📌 Yega-Repartidor – Issues Sprint 1
+# ✅ Yega-Repartidor – Issues Sprint 1 (Finalizado)
 
-## Issues
+**Resumen:** El Sprint 1 ha concluido. Todos los issues planificados fueron abordados. El foco estuvo en establecer la estructura base de la aplicación y las funcionalidades clave del dashboard y el flujo de entrega inicial.
+
+---
+
+## Issues Completados
 
 - [x] **Dashboard de Pedidos Disponibles (`PedidosDashboard`)**  
-  Listar pedidos cercanos desde API mock. Botón “Aceptar Pedido” cambia estado a `assigned`.
+  **Resultado:** Implementado. La pantalla lista los pedidos disponibles desde una API mock y el botón “Aceptar Pedido” funciona correctamente.
 
 - [x] **Flujo de Entrega (`RutaEntregaScreen`)**  
-  Botones para “Llegué a la tienda” → “En camino” → “Entregado”. Cada acción llama a `PATCH /pedidos/:id`.
-  - _Avance: Implementado, pero falta el flujo de estados intermedios (llegada a tienda, en camino)._
+  **Resultado:** Implementado. Se creó la pantalla y la lógica de botones para el ciclo de vida de la entrega.
+  _**Nota:** Se simplificó el flujo a los estados esenciales. La lógica para estados intermedios ("llegada a tienda", "en camino") queda pendiente para futuros sprints._
 
 - [x] **Configurar PWA básica**  
-  Implementar `manifest.json` y `service-worker.js` (offline real se deja para Sprint 5).
+  **Resultado:** Implementado. Se configuraron `manifest.json` y `service-worker.js` para establecer la base de la PWA. El soporte offline completo está planificado para un sprint posterior (Sprint 5, según la planificación inicial).

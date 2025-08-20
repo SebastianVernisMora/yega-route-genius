@@ -94,4 +94,4 @@ El backend debe proporcionar una API REST para gestionar el ciclo de vida de las
 -   `POST /api/v1/deliveries/{deliveryId}/take`: Permite al repartidor aceptar una entrega.
 -   `POST /api/v1/deliveries/{deliveryId}/deliver`: Permite al repartidor marcar una entrega como completada.
 
-Para más detalles, consulta el documento `docs/repartidor-plan.md`.
+Para más detalles, consulta el documento [`docs/repartidor-plan.md`](docs/repartidor-plan.md) y el resumen del sprint en [`docs/SPRINT-1-SUMMARY.md`](docs/SPRINT-1-SUMMARY.md).
