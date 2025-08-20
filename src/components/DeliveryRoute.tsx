@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/store/useStore';
+import { handleApiError } from '@/lib/apiErrorHandler';
 
 // This should be the single source of truth for the Order type
 interface Order {
@@ -60,10 +61,14 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
         queryClient.invalidateQueries(['delivery', order.id]);
       }
     },
-    onError: (error: Error) => {
+    onError: (error: unknown) => {
+      const message = handleApiError(error, {
+        context: 'updateDeliveryStatus',
+        defaultMessage: 'No se pudo actualizar el estado del pedido.',
+      });
       toast({
         title: "Error en la actualización",
-        description: error.message || "No se pudo actualizar el estado del pedido.",
+        description: message,
         variant: "destructive",
       });
     },
