@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, MapPin, Navigation, Clock, CheckCircle, Phone, MessageCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ const deliverOrder = async (orderId: string): Promise<any> => {
 
 
 const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
+  const [deliveryStep, setDeliveryStep] = useState<'PICKING_UP' | 'DELIVERING'>('PICKING_UP');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { actions } = useStore();
@@ -65,6 +67,10 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
     },
   });
 
+  const handlePickup = () => {
+    setDeliveryStep('DELIVERING');
+  };
+
   const handleDeliver = () => {
     deliver(order.id);
   };
@@ -74,9 +80,19 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
     switch (order.status) {
       case 'assignable': // Should technically be 'en route' by the time we are here
       case 'en route':
+        if (deliveryStep === 'PICKING_UP') {
+          return {
+            title: 'Dirígete a la tienda',
+            subtitle: `Recoge el pedido en ${order.pickup_address}`,
+            buttonText: 'He recogido el paquete',
+            buttonAction: handlePickup,
+            showRoute: true,
+            routeColor: 'primary'
+          };
+        }
         return {
           title: 'Dirígete al cliente',
-          subtitle: 'Entrega el pedido en la dirección indicada',
+          subtitle: `Entrega el pedido en ${order.delivery_address}`,
           buttonText: 'Pedido entregado',
           buttonAction: handleDeliver,
           showRoute: true,
@@ -132,7 +148,9 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
               <Navigation className="w-12 h-12 text-primary mx-auto mb-2" />
               <p className="text-muted-foreground text-sm">Mapa de navegación</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {order.status === 'en route' ? 'Ruta al cliente' : 'Ubicación actual'}
+                {order.status === 'en route'
+                  ? (deliveryStep === 'PICKING_UP' ? 'Ruta a la tienda' : 'Ruta al cliente')
+                  : 'Ubicación actual'}
               </p>
             </div>
           </div>
@@ -184,9 +202,9 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
           <Button
             onClick={stepConfig.buttonAction}
             className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-medium"
-            disabled={isDelivering}
+            disabled={isDelivering && deliveryStep === 'DELIVERING'}
           >
-            {isDelivering && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
+            {isDelivering && deliveryStep === 'DELIVERING' && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
             {stepConfig.buttonText}
           </Button>
 
