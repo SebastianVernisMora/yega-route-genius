@@ -5,9 +5,20 @@ import Dashboard from '@/components/Dashboard';
 import DeliveryRoute from '@/components/DeliveryRoute';
 import { useStore } from '@/store/useStore';
 
-jest.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({ toast: jest.fn() })
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({
+    toasts: [],
+    toast: vi.fn(),
+    dismiss: vi.fn(),
+  }),
 }));
+
+global.fetch = vi.fn(() =>
+  Promise.resolve({
+    json: () => Promise.resolve({}),
+    ok: true,
+  })
+);
 
 const sampleOrder: any = {
   id: '1',
@@ -18,10 +29,10 @@ const sampleOrder: any = {
   created_at: ''
 };
 
-jest.mock('@tanstack/react-query', () => ({
+vi.mock('@tanstack/react-query', () => ({
   useQuery: () => ({ data: [sampleOrder], isLoading: false }),
-  useMutation: () => ({ mutate: jest.fn(), isLoading: false }),
-  useQueryClient: () => ({ invalidateQueries: jest.fn() })
+  useMutation: () => ({ mutate: vi.fn(), isLoading: false }),
+  useQueryClient: () => ({ invalidateQueries: vi.fn() })
 }));
 
 describe('order flow', () => {

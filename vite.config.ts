@@ -6,7 +6,7 @@ import path from "path";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 5175,
   },
   plugins: [
     react(),
@@ -16,4 +16,14 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './setupTests.ts',
+    css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text','lcov']
+    }
+  }
 }));

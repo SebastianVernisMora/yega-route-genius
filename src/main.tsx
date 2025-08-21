@@ -28,11 +28,15 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+import { BrowserRouter } from 'react-router-dom';
+
 createRoot(document.getElementById('root')!).render(
   <PersistQueryClientProvider
     client={queryClient}
     persistOptions={{ persister }}
   >
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </PersistQueryClientProvider>
 );

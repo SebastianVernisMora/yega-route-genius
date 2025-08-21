@@ -2,22 +2,22 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-const mockMutate = jest.fn();
+const mockMutate = vi.fn();
 
-jest.mock('@tanstack/react-query', () => ({
+vi.mock('@tanstack/react-query', () => ({
   useMutation: () => ({ mutate: mockMutate, isLoading: false }),
-  useQueryClient: () => ({ invalidateQueries: jest.fn() })
+  useQueryClient: () => ({ invalidateQueries: vi.fn() })
 }));
 
-jest.mock('@/store/useStore', () => ({
-  useStore: () => ({ actions: { clearOrder: jest.fn() } })
+vi.mock('@/store/useStore', () => ({
+  useStore: () => ({ actions: { clearOrder: vi.fn() } })
 }));
 
-jest.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({ toast: jest.fn() })
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: vi.fn() })
 }));
 
-const DeliveryRoute = require('../DeliveryRoute').default;
+import DeliveryRoute from '../DeliveryRoute';
 
 describe('DeliveryRoute', () => {
   const order = {
