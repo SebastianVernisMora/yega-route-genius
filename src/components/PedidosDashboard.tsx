@@ -32,11 +32,11 @@ const fetchAssignableOrders = async (): Promise<Order[]> => {
   return response.json();
 };
 
-interface DashboardProps {
+interface PedidosDashboardProps {
   onAcceptOrder: (orderId: string) => void;
 }
 
-const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
+const PedidosDashboard = ({ onAcceptOrder }: PedidosDashboardProps) => {
   const [todayEarnings] = useState("$0.00");
   const { toast } = useToast();
   const { isOnline, actions } = useStore();
@@ -300,4 +300,4 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
   );
 };
 
-export default Dashboard;
+export default PedidosDashboard;
