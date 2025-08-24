@@ -3,22 +3,23 @@ import http from 'node:http';
 const users = [];
 
 const server = http.createServer((req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  try {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
 
-  const sendJson = (status, data) => {
-    res.writeHead(status, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(data));
-  };
+    const sendJson = (status, data) => {
+      res.writeHead(status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(data));
+    };
 
-  if (req.method === 'POST' && req.url === '/api/v1/auth/register') {
+    if (req.method === 'POST' && req.url === '/api/v1/auth/register') {
     let body = '';
     req.on('data', chunk => (body += chunk));
     req.on('end', () => {
@@ -62,6 +63,11 @@ const server = http.createServer((req, res) => {
   } else {
     sendJson(404, { message: 'Not found' });
   }
+} catch (e) {
+    console.error(e);
+    res.writeHead(500);
+    res.end('Internal Server Error');
+}
 });
 
 const PORT = process.env.PORT || 3000;
