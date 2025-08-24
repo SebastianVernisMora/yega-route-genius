@@ -57,6 +57,8 @@ const server = http.createServer((req, res) => {
         sendJson(400, { message: 'Invalid JSON' });
       }
     });
+  } else if (req.method === 'GET' && req.url === '/health') {
+    sendJson(200, { status: 'ok' });
   } else {
     sendJson(404, { message: 'Not found' });
   }
