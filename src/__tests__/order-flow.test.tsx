@@ -2,7 +2,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Dashboard from '@/components/Dashboard';
-import DeliveryRoute from '@/components/DeliveryRoute';
+import RutaEntregaScreen from '@/components/RutaEntregaScreen';
 import { useStore } from '@/store/useStore';
 
 vi.mock('@/hooks/use-toast', () => ({
@@ -48,10 +48,14 @@ describe('order flow', () => {
     await userEvent.click(screen.getByRole('button', { name: /aceptar pedido/i }));
 
     const order = useStore.getState().selectedOrder;
-    render(<DeliveryRoute order={{ ...order, status: 'en_route' }} />);
-    await userEvent.click(screen.getByRole('button', { name: /he llegado a la tienda/i }));
-    render(<DeliveryRoute order={{ ...order, status: 'picked_up' }} />);
-    await userEvent.click(screen.getByRole('button', { name: /pedido entregado/i }));
+    render(<RutaEntregaScreen order={{ ...order, status: 'en_route' }} />);
+    await userEvent.click(screen.getByRole('button', { name: /llegué a la tienda/i }));
+
+    render(<RutaEntregaScreen order={{ ...order, status: 'at_store' }} />);
+    await userEvent.click(screen.getByRole('button', { name: /en camino/i }));
+
+    render(<RutaEntregaScreen order={{ ...order, status: 'picked_up' }} />);
+    await userEvent.click(screen.getByRole('button', { name: /entregado/i }));
 
     actions.clearOrder();
     expect(useStore.getState().currentView).toBe('dashboard');
