@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/store/useStore';
 import Dashboard from '@/components/Dashboard';
-import DeliveryRoute from '@/components/DeliveryRoute';
+import RutaEntregaScreen from '@/components/RutaEntregaScreen';
 import Registration from '@/components/Registration';
 import VehicleDocuments from '@/components/VehicleDocuments';
 import DriverProfile from '@/components/DriverProfile';
@@ -91,7 +91,7 @@ const Index = () => {
             onAcceptOrder={acceptOrder}
           />;
       case 'delivery':
-        return selectedOrder && <DeliveryRoute order={selectedOrder} />;
+        return selectedOrder && <RutaEntregaScreen order={selectedOrder} />;
       case 'documents':
         return <VehicleDocuments onBack={() => setView('dashboard')} />;
       case 'profile':

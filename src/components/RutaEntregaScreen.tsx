@@ -21,7 +21,7 @@ interface Order {
   created_at: string;
 }
 
-interface DeliveryRouteProps {
+interface RutaEntregaScreenProps {
   order: Order;
 }
 
@@ -29,10 +29,10 @@ interface DeliveryRouteProps {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const updateDeliveryStatus = async ({ orderId, status }: { orderId: string, status: string }): Promise<any> => {
-  const response = await fetch(`${API_BASE_URL}/api/v1/deliveries/${orderId}/${status}`, {
-    method: 'POST',
+  const response = await fetch(`${API_BASE_URL}/pedidos/${orderId}`, {
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ timestamp: new Date().toISOString() }), // Add proof later
+    body: JSON.stringify({ status }),
   });
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({ message: 'Failed to update delivery status' }));
@@ -42,7 +42,7 @@ const updateDeliveryStatus = async ({ orderId, status }: { orderId: string, stat
 };
 
 
-const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
+const RutaEntregaScreen = ({ order }: RutaEntregaScreenProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { actions } = useStore();
@@ -51,8 +51,8 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
   const { mutate: updateStatus, isLoading } = useMutation(updateDeliveryStatus, {
     onSuccess: (data, variables) => {
       toast({
-        title: `¡Pedido ${variables.status}! `,
-        description: `El estado del pedido se ha actualizado.`,
+        title: `¡Pedido actualizado!`,
+        description: `El estado del pedido es ahora ${variables.status}.`,
       });
       if (variables.status === 'delivered') {
         queryClient.invalidateQueries(['assignableOrders']);
@@ -82,8 +82,8 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
         return {
           title: 'Dirígete a la tienda',
           subtitle: `Recoge el pedido en ${order.pickup_address}`,
-          buttonText: 'He llegado a la tienda',
-          buttonAction: () => updateStatus({ orderId: order.id, status: 'arrive' }),
+          buttonText: 'Llegué a la tienda',
+          buttonAction: () => updateStatus({ orderId: order.id, status: 'at_store' }),
           showRoute: true,
           routeColor: 'primary'
         };
@@ -91,8 +91,8 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
         return {
           title: 'Recoge el paquete',
           subtitle: `Confirma que tienes el pedido correcto.`,
-          buttonText: 'He recogido el paquete',
-          buttonAction: () => updateStatus({ orderId: order.id, status: 'pickup' }),
+          buttonText: 'En camino',
+          buttonAction: () => updateStatus({ orderId: order.id, status: 'picked_up' }),
           showRoute: false,
           routeColor: 'primary'
         };
@@ -100,8 +100,8 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
         return {
           title: 'Dirígete al cliente',
           subtitle: `Entrega el pedido en ${order.delivery_address}`,
-          buttonText: 'Pedido entregado',
-          buttonAction: () => updateStatus({ orderId: order.id, status: 'deliver' }),
+          buttonText: 'Entregado',
+          buttonAction: () => updateStatus({ orderId: order.id, status: 'delivered' }),
           showRoute: true,
           routeColor: 'primary'
         };
@@ -251,4 +251,4 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
   );
 };
 
-export default DeliveryRoute;
+export default RutaEntregaScreen;
