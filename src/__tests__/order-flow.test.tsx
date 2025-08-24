@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import Dashboard from '@/components/Dashboard';
+import PedidosDashboard from '@/components/PedidosDashboard';
 import DeliveryRoute from '@/components/DeliveryRoute';
 import { useStore } from '@/store/useStore';
 
@@ -42,7 +42,7 @@ describe('order flow', () => {
 
     const acceptOrder = (id: string) => actions.selectOrder(sampleOrder);
 
-    render(<Dashboard onAcceptOrder={acceptOrder} />);
+    render(<PedidosDashboard onAcceptOrder={acceptOrder} />);
     await userEvent.click(screen.getByRole('button', { name: /conectarse/i }));
     await screen.findByText(/aceptar pedido/i);
     await userEvent.click(screen.getByRole('button', { name: /aceptar pedido/i }));

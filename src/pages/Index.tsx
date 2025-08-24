@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/store/useStore';
-import Dashboard from '@/components/Dashboard';
+import PedidosDashboard from '@/components/PedidosDashboard';
 import DeliveryRoute from '@/components/DeliveryRoute';
 import Registration from '@/components/Registration';
 import VehicleDocuments from '@/components/VehicleDocuments';
@@ -87,7 +87,7 @@ const Index = () => {
     // Authenticated users see the main app views
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard 
+        return <PedidosDashboard
             onAcceptOrder={acceptOrder}
           />;
       case 'delivery':
@@ -100,7 +100,7 @@ const Index = () => {
         return <Earnings onBack={() => setView('dashboard')} />;
       default:
         // Fallback to dashboard for any other authenticated state
-        return <Dashboard
+        return <PedidosDashboard
             onAcceptOrder={acceptOrder}
           />;
     }

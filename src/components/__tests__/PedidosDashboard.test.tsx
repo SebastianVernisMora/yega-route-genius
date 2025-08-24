@@ -2,7 +2,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Dashboard from '../Dashboard';
+import PedidosDashboard from '../PedidosDashboard';
 import { useStore } from '@/store/useStore';
 
 const mockSetView = vi.fn();
@@ -34,7 +34,7 @@ vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: vi.fn() })
 }));
 
-describe('Dashboard', () => {
+describe('PedidosDashboard', () => {
   it('shows offline message and accepts order when online', async () => {
     const client = new QueryClient();
     const acceptMock = vi.fn();
@@ -58,7 +58,7 @@ describe('Dashboard', () => {
 
     const { rerender } = render(
       <QueryClientProvider client={client}>
-        <Dashboard onAcceptOrder={acceptMock} />
+        <PedidosDashboard onAcceptOrder={acceptMock} />
       </QueryClientProvider>
     );
 
@@ -68,7 +68,7 @@ describe('Dashboard', () => {
 
     rerender(
       <QueryClientProvider client={client}>
-        <Dashboard onAcceptOrder={acceptMock} />
+        <PedidosDashboard onAcceptOrder={acceptMock} />
       </QueryClientProvider>
     );
 
