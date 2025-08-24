@@ -18,6 +18,10 @@ app.post('/api/v1/drivers/status', (req, res) => {
   res.json({ online });
 });
 
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
