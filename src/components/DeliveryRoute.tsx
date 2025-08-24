@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, MapPin, Navigation, Clock, CheckCircle, Phone, MessageCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,20 +6,7 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/store/useStore';
 import { handleApiError } from '@/lib/apiErrorHandler';
-
-// This should be the single source of truth for the Order type
-interface Order {
-  id: string;
-  status: 'assignable' | 'en_route' | 'at_store' | 'picked_up' | 'delivered'; // Status now comes from the API
-  pickup_address: string;
-  delivery_address: string;
-  route: {
-    distance_meters: number;
-    estimated_time_seconds: number;
-    polyline: string;
-  };
-  created_at: string;
-}
+import { Order } from '@/types';
 
 interface DeliveryRouteProps {
   order: Order;
@@ -42,33 +29,65 @@ const updateDeliveryStatus = async ({ orderId, status }: { orderId: string, stat
 };
 
 
-const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
+const DELIVERY_ACTIONS = {
+  ARRIVE: 'arrive',
+  PICKUP: 'pickup',
+  DELIVER: 'deliver',
+} as const;
+
+const DeliveryRoute = ({ order: initialOrder }: DeliveryRouteProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { actions } = useStore();
   const { clearOrder } = actions;
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [currentOrder, setCurrentOrder] = useState(initialOrder);
 
-  const { mutate: updateStatus, isLoading } = useMutation(updateDeliveryStatus, {
+  useEffect(() => {
+    setCurrentOrder(initialOrder);
+  }, [initialOrder]);
+
+  const { mutate, isLoading } = useMutation(updateDeliveryStatus, {
+    onMutate: async (variables) => {
+      setApiError(null);
+      await queryClient.cancelQueries({ queryKey: ['delivery', currentOrder.id] });
+      const previousOrder = queryClient.getQueryData<Order>(['delivery', currentOrder.id]);
+
+      const nextStatus =
+        variables.status === DELIVERY_ACTIONS.ARRIVE ? 'at_store' :
+        variables.status === DELIVERY_ACTIONS.PICKUP ? 'picked_up' :
+        variables.status === DELIVERY_ACTIONS.DELIVER ? 'delivered' :
+        currentOrder.status;
+
+      setCurrentOrder(prev => ({ ...prev, status: nextStatus }));
+
+      return { previousOrder };
+    },
     onSuccess: (data, variables) => {
       toast({
-        title: `¡Pedido ${variables.status}! `,
-        description: `El estado del pedido se ha actualizado.`,
+        title: `¡Acción completada!`,
+        description: `El estado del pedido se ha actualizado correctamente.`,
       });
-      if (variables.status === 'delivered') {
-        queryClient.invalidateQueries(['assignableOrders']);
+      if (variables.status === DELIVERY_ACTIONS.DELIVER) {
+        queryClient.invalidateQueries({ queryKey: ['assignableOrders'] });
         clearOrder();
       } else {
-        queryClient.invalidateQueries(['delivery', order.id]);
+        // Refetch to get the latest server state
+        queryClient.invalidateQueries({ queryKey: ['delivery', currentOrder.id] });
       }
     },
-    onError: (error: unknown) => {
+    onError: (error: unknown, variables, context) => {
+      if (context?.previousOrder) {
+        setCurrentOrder(context.previousOrder);
+      }
       const message = handleApiError(error, {
         context: 'updateDeliveryStatus',
         defaultMessage: 'No se pudo actualizar el estado del pedido.',
       });
+      setApiError(message);
       toast({
         title: "Error en la actualización",
-        description: message,
+        description: "No se pudo completar la acción. Se restauró el estado anterior.",
         variant: "destructive",
       });
     },
@@ -76,14 +95,18 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
 
   const isDelivering = isLoading;
 
+  const handleUpdateStatus = (status: string) => {
+    mutate({ orderId: currentOrder.id, status });
+  };
+
   const getStepConfig = () => {
-    switch (order.status) {
+    switch (currentOrder.status) {
       case 'en_route':
         return {
           title: 'Dirígete a la tienda',
-          subtitle: `Recoge el pedido en ${order.pickup_address}`,
+          subtitle: `Recoge el pedido en ${currentOrder.pickup_address}`,
           buttonText: 'He llegado a la tienda',
-          buttonAction: () => updateStatus({ orderId: order.id, status: 'arrive' }),
+          buttonAction: () => handleUpdateStatus(DELIVERY_ACTIONS.ARRIVE),
           showRoute: true,
           routeColor: 'primary'
         };
@@ -92,16 +115,16 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
           title: 'Recoge el paquete',
           subtitle: `Confirma que tienes el pedido correcto.`,
           buttonText: 'He recogido el paquete',
-          buttonAction: () => updateStatus({ orderId: order.id, status: 'pickup' }),
+          buttonAction: () => handleUpdateStatus(DELIVERY_ACTIONS.PICKUP),
           showRoute: false,
           routeColor: 'primary'
         };
       case 'picked_up':
         return {
           title: 'Dirígete al cliente',
-          subtitle: `Entrega el pedido en ${order.delivery_address}`,
+          subtitle: `Entrega el pedido en ${currentOrder.delivery_address}`,
           buttonText: 'Pedido entregado',
-          buttonAction: () => updateStatus({ orderId: order.id, status: 'deliver' }),
+          buttonAction: () => handleUpdateStatus(DELIVERY_ACTIONS.DELIVER),
           showRoute: true,
           routeColor: 'primary'
         };
@@ -165,8 +188,8 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
               <Navigation className="w-12 h-12 text-primary mx-auto mb-2" />
               <p className="text-muted-foreground text-sm">Mapa de navegación</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {order.status === 'en_route' || order.status === 'picked_up'
-                  ? `Ruta hacia ${order.status === 'en_route' ? 'la tienda' : 'el cliente'}`
+                {currentOrder.status === 'en_route' || currentOrder.status === 'picked_up'
+                  ? `Ruta hacia ${currentOrder.status === 'en_route' ? 'la tienda' : 'el cliente'}`
                   : 'Ubicación actual'}
               </p>
             </div>
@@ -191,13 +214,13 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
         <Card className="p-4 bg-surface border-border mb-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Pedido {order.id}</h3>
-              <p className="text-sm text-muted-foreground">{order.pickup_address}</p>
+              <h3 className="text-lg font-semibold text-foreground">Pedido {currentOrder.id}</h3>
+              <p className="text-sm text-muted-foreground">{currentOrder.pickup_address}</p>
             </div>
             <div className="text-right">
               <div className="flex items-center space-x-1 text-muted-foreground">
                 <Clock className="w-4 h-4" />
-                <span className="text-sm">{formatTime(order.route.estimated_time_seconds)}</span>
+                <span className="text-sm">{formatTime(currentOrder.route.estimated_time_seconds)}</span>
               </div>
             </div>
           </div>
@@ -205,10 +228,10 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
           <div className="bg-surface-elevated rounded-lg p-3">
             <div>
               <p className="text-sm font-medium text-foreground mb-1">
-                🏠 {order.delivery_address}
+                🏠 {currentOrder.delivery_address}
               </p>
               <p className="text-xs text-muted-foreground">
-                Distancia total: {formatDistance(order.route.distance_meters)}
+                Distancia total: {formatDistance(currentOrder.route.distance_meters)}
               </p>
             </div>
           </div>
@@ -225,7 +248,13 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
             {stepConfig.buttonText}
           </Button>
 
-          {order.status !== 'delivered' && (
+          {apiError && (
+            <Card className="p-3 bg-destructive/10 border-destructive/30">
+              <p className="text-sm font-medium text-center text-destructive">{apiError}</p>
+            </Card>
+          )}
+
+          {currentOrder.status !== 'delivered' && (
             <div className="flex space-x-3">
               <Button
                 variant="outline"
