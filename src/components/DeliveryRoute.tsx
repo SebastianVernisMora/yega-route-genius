@@ -1,25 +1,12 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, MapPin, Navigation, Clock, CheckCircle, Phone, MessageCircle, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useStore } from '@/store/useStore';
+import { useStore, Order } from '@/store/useStore';
 import { handleApiError } from '@/lib/apiErrorHandler';
-
-// This should be the single source of truth for the Order type
-interface Order {
-  id: string;
-  status: 'assignable' | 'en_route' | 'at_store' | 'picked_up' | 'delivered'; // Status now comes from the API
-  pickup_address: string;
-  delivery_address: string;
-  route: {
-    distance_meters: number;
-    estimated_time_seconds: number;
-    polyline: string;
-  };
-  created_at: string;
-}
 
 interface DeliveryRouteProps {
   order: Order;
@@ -34,10 +21,16 @@ const updateDeliveryStatus = async ({ orderId, status }: { orderId: string, stat
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ timestamp: new Date().toISOString() }), // Add proof later
   });
+
   if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({ message: 'Failed to update delivery status' }));
-    throw new Error(errorBody.message);
+    const errorBody = await response.json().catch(() => ({ message: 'Error al actualizar estado.' }));
+    // Throw an object with more context
+    throw {
+      message: errorBody.message || 'La respuesta del servidor no fue válida.',
+      status: response.status,
+    };
   }
+
   return response.json();
 };
 
@@ -131,14 +124,22 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
   const formatDistance = (meters: number) => `${(meters / 1000).toFixed(1)} km`;
   const formatTime = (seconds: number) => `${Math.round(seconds / 60)} min`;
 
+  const statusText: Record<Order['status'], string> = {
+    en_route: 'En Camino a Tienda',
+    at_store: 'En Tienda',
+    picked_up: 'En Camino a Cliente',
+    delivered: 'Entregado',
+    assignable: 'Asignado',
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-surface border-b border-border p-4">
         <div className="flex items-center space-x-3">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={clearOrder}
             className="text-muted-foreground hover:text-foreground"
             disabled={isDelivering}
@@ -146,7 +147,10 @@ const DeliveryRoute = ({ order }: DeliveryRouteProps) => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold text-foreground">{stepConfig.title}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold text-foreground">{stepConfig.title}</h1>
+              <Badge variant={order.status === 'delivered' ? 'success' : 'default'}>{statusText[order.status]}</Badge>
+            </div>
             <p className="text-sm text-muted-foreground">{stepConfig.subtitle}</p>
           </div>
           <div className="text-right">

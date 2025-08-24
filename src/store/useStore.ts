@@ -3,9 +3,9 @@ import { create } from 'zustand';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Define the Order type, ensuring it's consistent across the app
-interface Order {
+export interface Order {
   id: string;
-  status: 'assignable' | 'en route' | 'delivered';
+  status: 'assignable' | 'en_route' | 'at_store' | 'picked_up' | 'delivered';
   pickup_address: string;
   delivery_address: string;
   route: {
