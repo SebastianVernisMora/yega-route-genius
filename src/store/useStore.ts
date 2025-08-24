@@ -1,22 +1,7 @@
 import { create } from 'zustand';
+import { Order, View } from '@/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-// Define the Order type, ensuring it's consistent across the app
-interface Order {
-  id: string;
-  status: 'assignable' | 'en route' | 'delivered';
-  pickup_address: string;
-  delivery_address: string;
-  route: {
-    distance_meters: number;
-    estimated_time_seconds: number;
-    polyline: string;
-  };
-  created_at: string;
-}
-
-type View = 'registration' | 'dashboard' | 'delivery' | 'documents' | 'profile' | 'earnings' | 'auth';
 
 interface AppState {
   isAuthenticated: boolean;

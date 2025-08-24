@@ -5,32 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useStore } from '@/store/useStore';
-
-// TODO: Move to a dedicated types/interfaces file
-interface Order {
-  id: string;
-  status: 'assignable';
-  pickup_address: string;
-  delivery_address: string;
-  route: {
-    distance_meters: number;
-    estimated_time_seconds: number;
-    polyline: string;
-  };
-  created_at: string;
-}
-
-// TODO: Move to a dedicated api/services file
-// TODO: Use environment variables for API base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-const fetchAssignableOrders = async (): Promise<Order[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/v1/deliveries/assignable`);
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-  return response.json();
-};
+import { Order } from '@/types';
+import { fetchAssignableOrders } from '@/lib/api';
 
 interface DashboardProps {
   onAcceptOrder: (orderId: string) => void;
@@ -203,8 +179,7 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
                       <DollarSign className="w-5 h-5 text-success" />
                     </div>
                     <div>
-                      {/* TODO: API should provide earnings */}
-                      <p className="text-xl font-bold text-success">$XX.XX</p>
+                      <p className="text-xl font-bold text-success">${order.earnings.toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground">Ganancia estimada</p>
                     </div>
                   </div>
@@ -221,8 +196,7 @@ const Dashboard = ({ onAcceptOrder }: DashboardProps) => {
                       <p className="text-sm font-medium text-foreground">
                         Recoger en: {order.pickup_address}
                       </p>
-                      {/* TODO: API should provide store distance */}
-                      <p className="text-xs text-muted-foreground">X.X km</p>
+                      <p className="text-xs text-muted-foreground">{formatDistance(order.distance_to_pickup_meters)} de ti</p>
                     </div>
                   </div>
                   
